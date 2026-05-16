@@ -1,0 +1,20 @@
+{
+  "name": "token-leaderboard-cli",
+  "version": "0.1.0",
+  "description": "Submit your Claude token usage to the Token Consumption Leaderboard",
+  "type": "module",
+  "bin": {
+    "token-leaderboard": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^13.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "~5.7.0"
+  }
+}

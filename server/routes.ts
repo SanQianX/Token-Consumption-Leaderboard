@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { type CcusageOptions } from "./ccusage.js"
 import { readCache, fetchAndCache, isRefreshing } from "./cache.js"
+import { createLeaderboardRoutes } from "./leaderboard-routes.js"
 
 const router = Router()
 
@@ -48,9 +49,13 @@ function makeHandler(command: string) {
   }
 }
 
+// Local ccusage data routes
 router.get("/api/daily", makeHandler("daily"))
 router.get("/api/monthly", makeHandler("monthly"))
 router.get("/api/session", makeHandler("session"))
 router.get("/api/blocks", makeHandler("blocks"))
+
+// Online leaderboard, profile, submit, and auth routes (proxy to Supabase)
+router.use(createLeaderboardRoutes())
 
 export { router }
