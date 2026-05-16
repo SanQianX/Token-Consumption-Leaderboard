@@ -1,7 +1,13 @@
 const DEFAULT_SERVER_URL = "http://124.220.17.38"
 
 function getServerUrl(): string {
-  return localStorage.getItem("serverUrl") || DEFAULT_SERVER_URL
+  const stored = localStorage.getItem("serverUrl")
+  if (stored) return stored
+  // In remote mode deployed on a server, use the current origin as API base
+  if (import.meta.env.VITE_APP_MODE === "remote" && window.location.protocol !== "file:") {
+    return window.location.origin
+  }
+  return DEFAULT_SERVER_URL
 }
 
 function getStoredToken(): string | null {

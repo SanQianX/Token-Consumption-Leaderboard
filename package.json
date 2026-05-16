@@ -9,6 +9,14 @@
     "dev:server": "pnpm --filter server dev",
     "build": "pnpm --filter local-app build",
     "build:remote": "VITE_APP_MODE=remote pnpm --filter local-app build",
-    "build:server": "pnpm --filter server build"
+    "build:server": "pnpm --filter server build",
+    "test": "playwright test",
+    "test:server": "playwright test --project=server-api",
+    "test:remote": "playwright test --project=remote-frontend",
+    "test:local": "playwright test --project=local-dashboard",
+    "test:settings": "playwright test --project=settings-api"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
   }
 }
