@@ -109,7 +109,7 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
     )
   }
 
-  const totalCols = columns.length + 1
+  const totalCols = columns.length + 1 // +1 for expand column
 
   return (
     <Card>
@@ -124,7 +124,7 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (
                 <TableRow key={hg.id}>
-                  {colCount > 0 && <TableHead className="w-10" />}
+                  <TableHead className="w-10" />
                   {hg.headers.map((header) => (
                     <TableHead
                       key={header.id}
@@ -150,7 +150,6 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
                 table.getRowModel().rows.map((row) => {
                   const original = row.original
                   const hasBreakdowns =
-                    mode !== "blocks" &&
                     "modelBreakdowns" in original &&
                     (original as { modelBreakdowns?: ModelBreakdown[] })
                       .modelBreakdowns?.length > 0
@@ -173,7 +172,7 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
                           }
                         }}
                       >
-                        {colCount > 0 && (
+                        {hasBreakdowns && (
                           <TableCell className="w-10 text-center">
                             {hasBreakdowns &&
                               (isExpanded ? (

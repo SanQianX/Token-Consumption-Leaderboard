@@ -37,6 +37,8 @@ router.put("/api/settings", async (req, res) => {
       apiToken: body.apiToken ?? current.apiToken,
       submitIntervalMinutes: body.submitIntervalMinutes ?? current.submitIntervalMinutes,
       autoSubmitEnabled: body.autoSubmitEnabled ?? current.autoSubmitEnabled,
+      lastSubmitAt: current.lastSubmitAt,
+      lastSubmitStatus: current.lastSubmitStatus,
     }
 
     await saveSettings(newSettings)

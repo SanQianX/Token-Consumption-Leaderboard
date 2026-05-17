@@ -8,15 +8,11 @@ import type {
   ViewMode,
   DailyResponse,
   MonthlyResponse,
-  SessionResponse,
-  BlocksResponse,
 } from "@/lib/types"
 
 type ViewData =
   | DailyResponse
   | MonthlyResponse
-  | SessionResponse
-  | BlocksResponse
   | null
 
 interface UserProfile {
