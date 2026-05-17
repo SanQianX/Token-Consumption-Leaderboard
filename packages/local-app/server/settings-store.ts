@@ -11,7 +11,7 @@ export interface Settings {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  serverUrl: "http://124.220.17.38",
+  serverUrl: "https://124.220.17.38",
   apiToken: "",
   submitIntervalMinutes: 30,
   autoSubmitEnabled: false,

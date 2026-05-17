@@ -1,4 +1,4 @@
-const DEFAULT_SERVER_URL = "http://124.220.17.38"
+const DEFAULT_SERVER_URL = "https://124.220.17.38"
 
 function getServerUrl(): string {
   const stored = localStorage.getItem("serverUrl")
