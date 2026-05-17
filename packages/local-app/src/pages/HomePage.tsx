@@ -5,16 +5,22 @@ import type {
   ViewMode,
   DailyResponse,
   MonthlyResponse,
-  SessionResponse,
-  BlocksResponse,
 } from "@/lib/types"
 
 type ViewData =
   | DailyResponse
   | MonthlyResponse
-  | SessionResponse
-  | BlocksResponse
   | null
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function thirtyDaysAgo(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 30)
+  return d.toISOString().slice(0, 10)
+}
 
 export function HomePage() {
   const [mode, setMode] = useState<ViewMode>("daily")
@@ -23,6 +29,8 @@ export function HomePage() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
+  const [startDate, setStartDate] = useState(thirtyDaysAgo())
+  const [endDate, setEndDate] = useState(today())
 
   const load = useCallback(async (m: ViewMode, isManualRefresh = false) => {
     if (!isManualRefresh) {
@@ -33,7 +41,9 @@ export function HomePage() {
     setError(null)
 
     try {
-      const result = await fetchData(m)
+      const since = m === "custom" ? startDate : undefined
+      const until = m === "custom" ? endDate : undefined
+      const result = await fetchData(m, since, until)
 
       if (result.data) {
         setData(result.data)
@@ -47,7 +57,7 @@ export function HomePage() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [])
+  }, [startDate, endDate])
 
   useEffect(() => {
     load(mode)
@@ -74,6 +84,10 @@ export function HomePage() {
       updatedAt={updatedAt}
       onModeChange={handleModeChange}
       onRefresh={handleRefresh}
+      startDate={startDate}
+      endDate={endDate}
+      onStartDateChange={setStartDate}
+      onEndDateChange={setEndDate}
     />
   )
 }

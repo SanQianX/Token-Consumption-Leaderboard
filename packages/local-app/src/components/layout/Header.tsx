@@ -6,8 +6,8 @@ import { RefreshCw } from "lucide-react"
 const TABS: { value: ViewMode; label: string }[] = [
   { value: "daily", label: "Daily" },
   { value: "monthly", label: "Monthly" },
-  { value: "session", label: "Session" },
-  { value: "blocks", label: "Blocks" },
+  { value: "custom", label: "Custom Range" },
+  { value: "alltime", label: "All Time" },
 ]
 
 interface HeaderProps {
@@ -16,14 +16,28 @@ interface HeaderProps {
   onRefresh: () => void
   refreshing: boolean
   updatedAt: string | null
+  startDate: string
+  endDate: string
+  onStartDateChange: (date: string) => void
+  onEndDateChange: (date: string) => void
 }
 
-export function Header({ mode, onModeChange, onRefresh, refreshing, updatedAt }: HeaderProps) {
+export function Header({
+  mode,
+  onModeChange,
+  onRefresh,
+  refreshing,
+  updatedAt,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+}: HeaderProps) {
   return (
     <header className="border-b border-border px-6 py-4">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <h1 className="text-xl font-semibold tracking-tight">
-          Token Consumption Leaderboard
+          Token Consumption Dashboard
         </h1>
         <div className="flex items-center gap-3">
           {updatedAt && (
@@ -52,6 +66,24 @@ export function Header({ mode, onModeChange, onRefresh, refreshing, updatedAt }:
           </Tabs>
         </div>
       </div>
+      {mode === "custom" && (
+        <div className="mx-auto mt-3 flex max-w-7xl items-center gap-3">
+          <label className="text-sm text-muted-foreground">From:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => onStartDateChange(e.target.value)}
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <label className="text-sm text-muted-foreground">To:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => onEndDateChange(e.target.value)}
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      )}
     </header>
   )
 }

@@ -1,4 +1,4 @@
-export type ViewMode = "daily" | "monthly" | "session" | "blocks"
+export type ViewMode = "daily" | "monthly" | "custom" | "alltime"
 
 export interface ModelBreakdown {
   modelName: string
@@ -128,5 +128,5 @@ export interface CachedEnvelope<T> {
 export type ApiResponse =
   | { mode: "daily"; data: DailyResponse }
   | { mode: "monthly"; data: MonthlyResponse }
-  | { mode: "session"; data: SessionResponse }
-  | { mode: "blocks"; data: BlocksResponse }
+  | { mode: "custom"; data: DailyResponse }
+  | { mode: "alltime"; data: DailyResponse }

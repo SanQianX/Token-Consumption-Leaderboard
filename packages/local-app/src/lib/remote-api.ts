@@ -41,7 +41,8 @@ async function apiRequest(path: string, options: RequestInit = {}): Promise<Resp
 // Auth APIs
 export async function loginWithGithub() {
   const serverUrl = getServerUrl()
-  window.location.href = `${serverUrl}/api/auth/github`
+  const returnUrl = encodeURIComponent(window.location.origin)
+  window.location.href = `${serverUrl}/api/auth/github?return_to=${returnUrl}`
 }
 
 export async function register(email: string, password: string, username: string) {

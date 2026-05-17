@@ -1,8 +1,6 @@
 import type {
   DailyResponse,
   MonthlyResponse,
-  SessionResponse,
-  BlocksResponse,
   ViewMode,
   CachedEnvelope,
 } from "./types"
@@ -10,33 +8,39 @@ import type {
 type ResponseMap = {
   daily: DailyResponse
   monthly: MonthlyResponse
-  session: SessionResponse
-  blocks: BlocksResponse
+  custom: DailyResponse
+  alltime: DailyResponse
 }
 
 export interface FetchResult<T> {
   data: T | null
-  loading: boolean   // true = first fetch in progress, no cache yet
-  stale: boolean     // true = showing cached data, refresh in progress
+  loading: boolean
+  stale: boolean
   updatedAt: string | null
 }
 
 export async function fetchData<M extends ViewMode>(
   mode: M,
+  since?: string,
+  until?: string,
 ): Promise<FetchResult<ResponseMap[M]>> {
-  const res = await fetch(`/api/${mode}`)
+  let url = `/api/${mode === "custom" || mode === "alltime" ? "daily" : mode}`
+  const params = new URLSearchParams()
+  if (since) params.set("since", since)
+  if (until) params.set("until", until)
+  if (params.toString()) url += `?${params}`
+
+  const res = await fetch(url)
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`)
   }
 
   const json = await res.json()
 
-  // First-time: no cache yet, server returns { data: null, loading: true }
   if (json.loading && json.data === null) {
     return { data: null, loading: true, stale: false, updatedAt: null }
   }
 
-  // Cached response: server returns { data: ..., updatedAt, stale, refreshing }
   const envelope = json as CachedEnvelope<ResponseMap[M]>
   return {
     data: envelope.data,

@@ -1,10 +1,9 @@
 import { Link, useLocation } from "react-router"
-import { Trophy, LayoutDashboard, Settings } from "lucide-react"
+import { Trophy, LayoutDashboard, Settings, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LoginButton } from "@/components/auth/LoginButton"
 import { UserMenu } from "@/components/auth/UserMenu"
 import { useAuth } from "@/hooks/useAuth"
-import { getServerUrl } from "@/lib/remote-api"
 
 const APP_MODE = import.meta.env.VITE_APP_MODE || "local"
 
@@ -35,6 +34,20 @@ export function Navbar() {
                   <Trophy className="h-4 w-4" />
                   Leaderboard
                 </Link>
+                {user?.is_admin && (
+                  <Link
+                    to="/admin"
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                      location.pathname === "/admin"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </Link>
+                )}
               </>
             ) : (
               // Local mode links
@@ -51,13 +64,18 @@ export function Navbar() {
                   <LayoutDashboard className="h-4 w-4" />
                   Dashboard
                 </Link>
-                <button
-                  onClick={() => window.open(getServerUrl(), "_blank")}
-                  className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                <Link
+                  to="/leaderboard"
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    location.pathname === "/leaderboard"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
                 >
                   <Trophy className="h-4 w-4" />
                   Leaderboard
-                </button>
+                </Link>
                 <Link
                   to="/settings"
                   className={cn(
@@ -70,6 +88,20 @@ export function Navbar() {
                   <Settings className="h-4 w-4" />
                   Settings
                 </Link>
+                {user?.is_admin && (
+                  <Link
+                    to="/admin"
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                      location.pathname === "/admin"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </Link>
+                )}
               </>
             )}
           </div>

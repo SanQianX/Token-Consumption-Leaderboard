@@ -9,6 +9,8 @@ interface SettingsData {
   _hasApiToken: boolean
   submitIntervalMinutes: number
   autoSubmitEnabled: boolean
+  lastSubmitAt: string | null
+  lastSubmitStatus: string | null
 }
 
 export function SettingsPage() {
@@ -18,6 +20,8 @@ export function SettingsPage() {
     _hasApiToken: false,
     submitIntervalMinutes: 30,
     autoSubmitEnabled: false,
+    lastSubmitAt: null,
+    lastSubmitStatus: null,
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -165,6 +169,25 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {settings.lastSubmitAt && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Last Submit</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">
+              <span className={settings.lastSubmitStatus === "success" ? "text-green-600" : "text-red-600"}>
+                {settings.lastSubmitStatus === "success" ? "Success" : "Failed"}
+              </span>
+              {" - "}
+              <span className="text-muted-foreground">
+                {new Date(settings.lastSubmitAt).toLocaleString()}
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {message && (
         <div

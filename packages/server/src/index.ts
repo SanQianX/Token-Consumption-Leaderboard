@@ -4,6 +4,7 @@ import { createAuthRoutes } from "./routes/auth.js"
 import { createLeaderboardRoutes } from "./routes/leaderboard.js"
 import { createProfileRoutes } from "./routes/profile.js"
 import { createSubmitRoutes } from "./routes/submit.js"
+import { createAdminRoutes } from "./routes/admin.js"
 import { refreshLeaderboardCache } from "./services/leaderboard-cache.js"
 
 const app = express()
@@ -22,6 +23,7 @@ app.use(createAuthRoutes())
 app.use(createLeaderboardRoutes())
 app.use(createProfileRoutes())
 app.use(createSubmitRoutes())
+app.use(createAdminRoutes())
 
 // Health check
 app.get("/api/health", (_req, res) => {

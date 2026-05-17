@@ -16,7 +16,7 @@ async function runMigrations() {
     const { rows } = await client.query("SELECT name FROM migrations ORDER BY id")
     const applied = new Set(rows.map((r: { name: string }) => r.name))
 
-    const migrationFiles = ["001_initial.sql"]
+    const migrationFiles = ["001_initial.sql", "002_code_column_to_text.sql", "003_admin_and_settings.sql"]
 
     for (const file of migrationFiles) {
       if (applied.has(file)) {

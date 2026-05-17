@@ -5,6 +5,7 @@ import { Trophy } from "lucide-react"
 import { formatTokens, formatCost } from "@/lib/format"
 import { Link } from "react-router"
 import { fetchLeaderboard } from "@/lib/remote-api"
+import { useAuth } from "@/hooks/useAuth"
 
 type LeaderboardPeriod = "1d" | "7d" | "30d" | "all_time"
 type LeaderboardSort = "tokens" | "cost"
@@ -26,6 +27,7 @@ const PERIODS: { value: LeaderboardPeriod; label: string }[] = [
 ]
 
 export function LeaderboardPage() {
+  const { user } = useAuth()
   const [period, setPeriod] = useState<LeaderboardPeriod>("all_time")
   const [sort, setSort] = useState<LeaderboardSort>("tokens")
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
@@ -66,6 +68,16 @@ export function LeaderboardPage() {
         <p className="text-sm text-muted-foreground">
           See how your Claude usage compares with other users worldwide.
         </p>
+        {!user && (
+          <div className="rounded-lg border border-border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              <Link to="/settings" className="font-medium text-primary underline-offset-4 hover:underline">
+                Log in
+              </Link>{" "}
+              to see your ranking on the leaderboard and submit your usage data.
+            </p>
+          </div>
+        )}
       </div>
 
       <Card>
