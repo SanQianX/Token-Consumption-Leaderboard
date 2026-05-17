@@ -34,7 +34,7 @@ CREATE TABLE users (
 CREATE TABLE email_verification_codes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email VARCHAR(255) NOT NULL,
-  code VARCHAR(6) NOT NULL,
+  code TEXT NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,
   used BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
