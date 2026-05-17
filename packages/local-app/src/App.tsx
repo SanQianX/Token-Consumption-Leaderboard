@@ -5,6 +5,7 @@ import { LeaderboardPage } from "@/pages/LeaderboardPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { LoginPage } from "@/pages/LoginPage"
 import { SettingsPage } from "@/pages/SettingsPage"
+import { AdminPage } from "@/pages/AdminPage"
 import { AuthCallbackPage } from "@/pages/AuthCallbackPage"
 
 // VITE_APP_MODE: "local" (default) or "remote"
@@ -22,6 +23,7 @@ function App() {
             <Route path="/leaderboard" element={<Navigate to="/" replace />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
@@ -33,6 +35,7 @@ function App() {
             <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
           </>
         )}

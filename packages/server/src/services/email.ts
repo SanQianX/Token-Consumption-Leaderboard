@@ -1,23 +1,49 @@
 import nodemailer from "nodemailer"
+import { query } from "../db/client.js"
 
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.163.com"
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || "465")
-const SMTP_USER = process.env.SMTP_USER || ""
-const SMTP_PASS = process.env.SMTP_PASS || ""
+interface SmtpConfig {
+  host: string
+  port: number
+  user: string
+  pass: string
+}
 
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: true,
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-})
+async function getSmtpConfig(): Promise<SmtpConfig> {
+  try {
+    const { rows } = await query("SELECT key, value FROM admin_settings WHERE key LIKE 'smtp_%'")
+    const settings = Object.fromEntries(rows.map((r: { key: string; value: string }) => [r.key, r.value]))
+
+    return {
+      host: settings.smtp_host || process.env.SMTP_HOST || "smtp.163.com",
+      port: parseInt(settings.smtp_port || process.env.SMTP_PORT || "465"),
+      user: settings.smtp_user || process.env.SMTP_USER || "",
+      pass: settings.smtp_pass || process.env.SMTP_PASS || "",
+    }
+  } catch {
+    return {
+      host: process.env.SMTP_HOST || "smtp.163.com",
+      port: parseInt(process.env.SMTP_PORT || "465"),
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+    }
+  }
+}
 
 export async function sendVerificationCode(email: string, code: string): Promise<void> {
+  const config = await getSmtpConfig()
+
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: true,
+    auth: {
+      user: config.user,
+      pass: config.pass,
+    },
+  })
+
   await transporter.sendMail({
-    from: `"Token Leaderboard" <${SMTP_USER}>`,
+    from: `"Token Leaderboard" <${config.user}>`,
     to: email,
     subject: "Token Leaderboard - Verification Code",
     html: `

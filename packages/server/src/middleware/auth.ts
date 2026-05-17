@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express"
 import { verifyToken } from "../utils/token.js"
+import { query } from "../db/client.js"
 
 export interface AuthRequest extends Request {
   userId?: string
@@ -42,5 +43,18 @@ export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunctio
       req.username = payload.username
     }
   }
+  next()
+}
+
+export async function adminMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+  if (!req.userId) {
+    return res.status(401).json({ error: "Not authenticated" })
+  }
+
+  const { rows } = await query("SELECT is_admin FROM users WHERE id = $1", [req.userId])
+  if (!rows.length || !rows[0].is_admin) {
+    return res.status(403).json({ error: "Admin access required" })
+  }
+
   next()
 }

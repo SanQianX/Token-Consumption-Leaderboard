@@ -8,6 +8,8 @@ export interface Settings {
   apiToken: string
   submitIntervalMinutes: number
   autoSubmitEnabled: boolean
+  lastSubmitAt: string | null
+  lastSubmitStatus: string | null
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -15,6 +17,8 @@ const DEFAULT_SETTINGS: Settings = {
   apiToken: "",
   submitIntervalMinutes: 30,
   autoSubmitEnabled: false,
+  lastSubmitAt: null,
+  lastSubmitStatus: null,
 }
 
 function getSettingsDir(): string {

@@ -16,12 +16,15 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173"
 // ============================================
 // GET /api/auth/github — Redirect to GitHub OAuth
 // ============================================
-router.get("/api/auth/github", (_req, res) => {
-  const redirectUri = `${FRONTEND_URL}/api/auth/github/callback`
+router.get("/api/auth/github", (req, res) => {
+  const returnTo = req.query.return_to as string | undefined
+  const state = Buffer.from(JSON.stringify({ returnTo: returnTo || FRONTEND_URL })).toString("base64url")
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/auth/github/callback`
   const githubAuthUrl = new URL("https://github.com/login/oauth/authorize")
   githubAuthUrl.searchParams.set("client_id", GITHUB_CLIENT_ID)
   githubAuthUrl.searchParams.set("redirect_uri", redirectUri)
   githubAuthUrl.searchParams.set("scope", "read:user,user:email")
+  githubAuthUrl.searchParams.set("state", state)
   res.redirect(githubAuthUrl.toString())
 })
 
@@ -29,9 +32,20 @@ router.get("/api/auth/github", (_req, res) => {
 // GET /api/auth/github/callback — OAuth callback
 // ============================================
 router.get("/api/auth/github/callback", async (req, res) => {
+  // Decode state to recover the caller's origin
+  const stateStr = req.query.state as string
+  let returnTo = FRONTEND_URL
+  try {
+    const state = JSON.parse(Buffer.from(stateStr, "base64url").toString())
+    const rt = state.returnTo || ""
+    if (rt === FRONTEND_URL || /^http:\/\/localhost(:\d+)?$/.test(rt)) {
+      returnTo = rt
+    }
+  } catch {}
+
   const code = req.query.code as string
   if (!code) {
-    return res.redirect(`${FRONTEND_URL}/login?error=no_code`)
+    return res.redirect(`${returnTo}/login?error=no_code`)
   }
 
   try {
@@ -50,7 +64,7 @@ router.get("/api/auth/github/callback", async (req, res) => {
     })
     const tokenData = await tokenRes.json() as { access_token?: string; error?: string }
     if (!tokenData.access_token) {
-      return res.redirect(`${FRONTEND_URL}/login?error=token_exchange_failed`)
+      return res.redirect(`${returnTo}/login?error=token_exchange_failed`)
     }
 
     // Get GitHub user info
@@ -122,10 +136,10 @@ router.get("/api/auth/github/callback", async (req, res) => {
     }
 
     const jwt = signToken({ userId, username })
-    res.redirect(`${FRONTEND_URL}/auth/callback?token=${jwt}`)
+    res.redirect(`${returnTo}/auth/callback?token=${jwt}`)
   } catch (err) {
     console.error("GitHub OAuth error:", err)
-    res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`)
+    res.redirect(`${returnTo}/login?error=oauth_failed`)
   }
 })
 
@@ -300,7 +314,7 @@ router.post("/api/auth/login", async (req, res) => {
 router.get("/api/auth/me", authMiddleware, async (req: AuthRequest, res) => {
   try {
     const { rows } = await query(
-      "SELECT id, username, display_name, avatar_url, email, email_verified, auth_provider, bio, created_at FROM users WHERE id = $1",
+      "SELECT id, username, display_name, avatar_url, email, email_verified, auth_provider, bio, is_admin, created_at FROM users WHERE id = $1",
       [req.userId]
     )
 
@@ -315,6 +329,7 @@ router.get("/api/auth/me", authMiddleware, async (req: AuthRequest, res) => {
         username: user.username,
         email: user.email,
         auth_provider: user.auth_provider,
+        is_admin: user.is_admin || false,
         created_at: user.created_at,
       },
       profile: {

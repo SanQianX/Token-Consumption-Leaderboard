@@ -24,20 +24,17 @@ import { formatTokens, formatCost, formatDate } from "@/lib/format"
 import type {
   DailyEntry,
   MonthlyEntry,
-  SessionEntry,
-  BlockEntry,
   ModelBreakdown,
+  ViewMode,
 } from "@/lib/types"
 import { ChevronDown, ChevronRight, ChevronUp, ChevronsUpDown } from "lucide-react"
 
 type RowData =
   | (DailyEntry & { _type: "daily" })
   | (MonthlyEntry & { _type: "monthly" })
-  | (SessionEntry & { _type: "session" })
-  | (BlockEntry & { _type: "blocks" })
 
 interface DataTableProps {
-  mode: "daily" | "monthly" | "session" | "blocks"
+  mode: ViewMode
   data: RowData[]
   loading: boolean
 }
@@ -52,36 +49,21 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
-  const colCount = mode === "blocks" ? 0 : 1
+  const isDailyLike = mode === "daily" || mode === "custom" || mode === "alltime"
 
   const columns = useMemo<ColumnDef<RowData, unknown>[]>(() => {
     const cols: ColumnDef<RowData, unknown>[] = []
 
-    if (mode === "daily") {
+    if (isDailyLike) {
       cols.push({
         accessorKey: "date",
         header: "Date",
         cell: ({ getValue }) => formatDate(getValue() as string),
       })
-    } else if (mode === "monthly") {
+    } else {
       cols.push({
         accessorKey: "month",
         header: "Month",
-      })
-    } else if (mode === "session") {
-      cols.push({
-        accessorKey: "sessionId",
-        header: "Session ID",
-        cell: ({ getValue }) => {
-          const id = getValue() as string
-          return <span className="font-mono text-xs">{id.slice(0, 8)}...</span>
-        },
-      })
-    } else {
-      cols.push({
-        accessorKey: "startTime",
-        header: "Start Time",
-        cell: ({ getValue }) => formatDate(getValue() as string),
       })
     }
 
@@ -92,45 +74,14 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
         cell: ({ getValue }) => formatTokens(getValue() as number),
       },
       {
-        accessorKey: mode === "blocks" ? "costUSD" : "totalCost",
+        accessorKey: "totalCost",
         header: "Cost",
         cell: ({ getValue }) => formatCost(getValue() as number),
       },
     )
 
-    if (mode === "session") {
-      cols.push({
-        accessorKey: "projectPath",
-        header: "Project",
-        cell: ({ getValue }) => {
-          const path = getValue() as string
-          const name = path.split("/").pop() || path.split("\\").pop() || path
-          return <span className="font-mono text-xs">{name}</span>
-        },
-      })
-    }
-
-    if (mode === "blocks") {
-      cols.push(
-        {
-          accessorKey: "entries",
-          header: "Entries",
-        },
-        {
-          accessorKey: "isActive",
-          header: "Active",
-          cell: ({ getValue }) =>
-            getValue() ? (
-              <span className="inline-block rounded bg-green-500/20 px-2 py-0.5 text-xs text-green-600 dark:text-green-400">
-                Active
-              </span>
-            ) : null,
-        },
-      )
-    }
-
     return cols
-  }, [mode])
+  }, [isDailyLike])
 
   const table = useReactTable({
     data,
@@ -158,13 +109,13 @@ export function DataTable({ mode, data, loading }: DataTableProps) {
     )
   }
 
-  const totalCols = columns.length + colCount
+  const totalCols = columns.length + 1
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-semibold">
-          {mode.charAt(0).toUpperCase() + mode.slice(1)} Data
+          {mode === "alltime" ? "All Time" : mode === "custom" ? "Custom Range" : mode.charAt(0).toUpperCase() + mode.slice(1)} Data
         </CardTitle>
       </CardHeader>
       <CardContent>

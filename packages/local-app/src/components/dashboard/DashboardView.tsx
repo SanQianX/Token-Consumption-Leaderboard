@@ -6,8 +6,6 @@ import type {
   ViewMode,
   DailyResponse,
   MonthlyResponse,
-  SessionResponse,
-  BlocksResponse,
   Totals,
 } from "@/lib/types"
 import { formatDate } from "@/lib/format"
@@ -15,8 +13,6 @@ import { formatDate } from "@/lib/format"
 type ViewData =
   | DailyResponse
   | MonthlyResponse
-  | SessionResponse
-  | BlocksResponse
   | null
 
 function getTotals(_mode: ViewMode, data: ViewData): Totals | null {
@@ -30,7 +26,7 @@ function getChartData(
   data: ViewData,
 ): { label: string; totalTokens: number; totalCost: number }[] {
   if (!data) return []
-  if (mode === "daily" && "daily" in data) {
+  if ((mode === "daily" || mode === "custom" || mode === "alltime") && "daily" in data) {
     return data.daily.map((d) => ({
       label: formatDate(d.date),
       totalTokens: d.totalTokens,
@@ -44,22 +40,6 @@ function getChartData(
       totalCost: m.totalCost,
     }))
   }
-  if (mode === "session" && "sessions" in data) {
-    return data.sessions.map((s) => ({
-      label: s.sessionId.slice(0, 8),
-      totalTokens: s.totalTokens,
-      totalCost: s.totalCost,
-    }))
-  }
-  if (mode === "blocks" && "blocks" in data) {
-    return data.blocks
-      .filter((b) => !b.isGap)
-      .map((b) => ({
-        label: formatDate(b.startTime),
-        totalTokens: b.totalTokens,
-        totalCost: b.costUSD,
-      }))
-  }
   return []
 }
 
@@ -68,17 +48,11 @@ function getTableData(
   data: ViewData,
 ): (Record<string, unknown> & { _type: ViewMode })[] {
   if (!data) return []
-  if (mode === "daily" && "daily" in data) {
+  if ((mode === "daily" || mode === "custom" || mode === "alltime") && "daily" in data) {
     return data.daily.map((d) => ({ ...d, _type: "daily" as const }))
   }
   if (mode === "monthly" && "monthly" in data) {
     return data.monthly.map((m) => ({ ...m, _type: "monthly" as const }))
-  }
-  if (mode === "session" && "sessions" in data) {
-    return data.sessions.map((s) => ({ ...s, _type: "session" as const }))
-  }
-  if (mode === "blocks" && "blocks" in data) {
-    return data.blocks.map((b) => ({ ...b, _type: "blocks" as const }))
   }
   return []
 }
@@ -92,6 +66,10 @@ interface DashboardViewProps {
   updatedAt: string | null
   onModeChange: (mode: ViewMode) => void
   onRefresh: () => void
+  startDate: string
+  endDate: string
+  onStartDateChange: (date: string) => void
+  onEndDateChange: (date: string) => void
 }
 
 export function DashboardView({
@@ -103,6 +81,10 @@ export function DashboardView({
   updatedAt,
   onModeChange,
   onRefresh,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
 }: DashboardViewProps) {
   const totals = getTotals(mode, data)
   const chartData = getChartData(mode, data)
@@ -116,6 +98,10 @@ export function DashboardView({
         onRefresh={onRefresh}
         refreshing={refreshing}
         updatedAt={updatedAt}
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={onStartDateChange}
+        onEndDateChange={onEndDateChange}
       />
       <main className="mx-auto max-w-7xl space-y-6 p-6">
         {error && (

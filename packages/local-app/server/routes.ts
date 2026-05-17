@@ -2,6 +2,7 @@ import { Router } from "express"
 import { type CcusageOptions } from "./ccusage.js"
 import { readCache, fetchAndCache, isRefreshing } from "./cache.js"
 import { createSettingsRoutes } from "./settings-routes.js"
+import { transformForCommand } from "./transform.js"
 
 const router = Router()
 
@@ -27,9 +28,10 @@ function makeHandler(command: string) {
       const cached = await readCache(command, options)
 
       if (cached) {
-        // Send stale data, refresh in background
+        const transformedData = transformForCommand(command, cached.data)
         res.json({
-          ...cached,
+          data: transformedData,
+          updatedAt: cached.updatedAt,
           stale: true,
           refreshing: isRefreshing(cacheKey),
         })
