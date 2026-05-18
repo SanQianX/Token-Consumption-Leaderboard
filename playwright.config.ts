@@ -39,5 +39,17 @@ export default defineConfig({
         baseURL: process.env.LOCAL_URL || "http://localhost:3001",
       },
     },
+    {
+      name: "oauth-redirect",
+      testMatch: "oauth-redirect.spec.ts",
+      use: {
+        ignoreHTTPSErrors: true,
+      },
+    },
+    {
+      name: "oauth-debug",
+      testMatch: "oauth-debug.spec.ts",
+      use: {},
+    },
   ],
 })

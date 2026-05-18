@@ -29,7 +29,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for token from OAuth callback
+    // Only process token if NOT on /auth/callback (that page handles its own token)
+    if (window.location.pathname === "/auth/callback") {
+      // Load user from stored token only
+      const loadUser = async () => {
+        const token = localStorage.getItem("auth_token")
+        if (!token) {
+          setLoading(false)
+          return
+        }
+        try {
+          const data = await getMe()
+          if (data?.user) {
+            setUser(data.user)
+            setProfile(data.profile)
+          }
+        } catch {}
+        setLoading(false)
+      }
+      loadUser()
+      return
+    }
+
+    // Check for token from OAuth callback (other pages)
     const params = new URLSearchParams(window.location.search)
     const tokenParam = params.get("token")
     if (tokenParam) {

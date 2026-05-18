@@ -68,8 +68,8 @@ function deriveMonthlyFromDaily(rawDaily: { daily: DailyEntry[] }) {
   const monthMap = new Map<string, MonthlyAgg>()
 
   for (const entry of rawDaily.daily) {
-    const period = entry.period ?? entry.date ?? ""
-    const month = period.slice(0, 7)
+    const dateStr = entry.date ?? entry.period ?? ""
+    const month = dateStr.slice(0, 7)
 
     if (!monthMap.has(month)) {
       monthMap.set(month, {

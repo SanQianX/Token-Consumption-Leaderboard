@@ -19,7 +19,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173"
 router.get("/api/auth/github", (req, res) => {
   const returnTo = req.query.return_to as string | undefined
   const state = Buffer.from(JSON.stringify({ returnTo: returnTo || FRONTEND_URL })).toString("base64url")
-  const redirectUri = `${req.protocol}://${req.get("host")}/api/auth/github/callback`
+  const redirectUri = `${FRONTEND_URL}/api/auth/github/callback`
   const githubAuthUrl = new URL("https://github.com/login/oauth/authorize")
   githubAuthUrl.searchParams.set("client_id", GITHUB_CLIENT_ID)
   githubAuthUrl.searchParams.set("redirect_uri", redirectUri)
@@ -34,18 +34,25 @@ router.get("/api/auth/github", (req, res) => {
 router.get("/api/auth/github/callback", async (req, res) => {
   // Decode state to recover the caller's origin
   const stateStr = req.query.state as string
-  let returnTo = FRONTEND_URL
+  let returnTo: string | null = null
   try {
     const state = JSON.parse(Buffer.from(stateStr, "base64url").toString())
     const rt = state.returnTo || ""
+    console.log(`[oauth] callback returnTo="${rt}", FRONTEND_URL="${FRONTEND_URL}"`)
     if (rt === FRONTEND_URL || /^http:\/\/localhost(:\d+)?$/.test(rt)) {
       returnTo = rt
+    } else {
+      console.log(`[oauth] returnTo "${rt}" rejected, falling back to FRONTEND_URL`)
     }
-  } catch {}
+  } catch (err) {
+    console.log(`[oauth] state decode failed:`, (err as Error).message)
+  }
 
   const code = req.query.code as string
   if (!code) {
-    return res.redirect(`${returnTo}/login?error=no_code`)
+    const fallback = returnTo || FRONTEND_URL
+    console.log(`[oauth] no code in callback, redirecting to ${fallback}/login?error=no_code`)
+    return res.redirect(`${fallback}/login?error=no_code`)
   }
 
   try {
@@ -64,7 +71,8 @@ router.get("/api/auth/github/callback", async (req, res) => {
     })
     const tokenData = await tokenRes.json() as { access_token?: string; error?: string }
     if (!tokenData.access_token) {
-      return res.redirect(`${returnTo}/login?error=token_exchange_failed`)
+      const fallback = returnTo || FRONTEND_URL
+      return res.redirect(`${fallback}/login?error=token_exchange_failed`)
     }
 
     // Get GitHub user info
@@ -136,10 +144,23 @@ router.get("/api/auth/github/callback", async (req, res) => {
     }
 
     const jwt = signToken({ userId, username })
-    res.redirect(`${returnTo}/auth/callback?token=${jwt}`)
+
+    // Always redirect to our own frontend first, pass returnTo as a query param.
+    // The frontend AuthCallbackPage will then forward to localhost if needed.
+    // This avoids HTTPS→HTTP downgrade redirect issues.
+    const isLocalhost = returnTo && /^http:\/\/localhost(:\d+)?$/.test(returnTo)
+    if (isLocalhost) {
+      console.log(`[oauth] success, redirecting via own callback to localhost`)
+      res.redirect(`${FRONTEND_URL}/auth/callback?token=${jwt}&return_to=${encodeURIComponent(returnTo!)}`)
+    } else {
+      const dest = returnTo || FRONTEND_URL
+      console.log(`[oauth] success, redirecting to ${dest}/auth/callback?token=...`)
+      res.redirect(`${dest}/auth/callback?token=${jwt}`)
+    }
   } catch (err) {
     console.error("GitHub OAuth error:", err)
-    res.redirect(`${returnTo}/login?error=oauth_failed`)
+    const fallback = returnTo || FRONTEND_URL
+    res.redirect(`${fallback}/login?error=oauth_failed`)
   }
 })
 
