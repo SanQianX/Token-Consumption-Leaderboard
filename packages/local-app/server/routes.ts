@@ -1,8 +1,7 @@
 import { Router } from "express"
 import { type CcusageOptions } from "./ccusage.js"
-import { readCache, fetchAndCache, isRefreshing } from "./cache.js"
+import { readDailyCache, fetchAndCacheDaily, isRefreshingCache, deriveView } from "./cache.js"
 import { createSettingsRoutes } from "./settings-routes.js"
-import { transformForCommand } from "./transform.js"
 
 const router = Router()
 
@@ -21,29 +20,27 @@ function makeHandler(command: string) {
     status: (code: number) => { json: (body: unknown) => void }
   }) => {
     const options = parseOptions(req.query)
-    const cacheKey = `${command}:${JSON.stringify(options)}`
 
     try {
-      // Return cached data immediately
-      const cached = await readCache(command, options)
+      const cached = await readDailyCache()
 
       if (cached) {
-        const transformedData = transformForCommand(command, cached.data)
+        const derivedData = deriveView(command, options, cached.data as Parameters<typeof deriveView>[2])
         res.json({
-          data: transformedData,
+          data: derivedData,
           updatedAt: cached.updatedAt,
           stale: true,
-          refreshing: isRefreshing(cacheKey),
+          refreshing: isRefreshingCache(),
         })
 
         // Trigger background refresh (non-blocking)
-        fetchAndCache(command, options)
+        fetchAndCacheDaily()
       } else {
         // No cache yet — must wait for first fetch
         res.json({ data: null, loading: true, stale: false })
 
         // Fetch in background, next request will have data
-        fetchAndCache(command, options)
+        fetchAndCacheDaily()
       }
     } catch (error) {
       res.status(500).json({ error: (error as Error).message })
@@ -51,11 +48,11 @@ function makeHandler(command: string) {
   }
 }
 
-// Local ccusage data routes
+// All views derived from single daily ccusage call
 router.get("/api/daily", makeHandler("daily"))
 router.get("/api/monthly", makeHandler("monthly"))
-router.get("/api/session", makeHandler("session"))
-router.get("/api/blocks", makeHandler("blocks"))
+router.get("/api/session", makeHandler("daily"))
+router.get("/api/blocks", makeHandler("daily"))
 
 // Settings routes
 router.use(createSettingsRoutes())
