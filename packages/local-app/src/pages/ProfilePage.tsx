@@ -145,6 +145,10 @@ export function ProfilePage() {
         updatedAt={updatedAt}
         onModeChange={handleModeChange}
         onRefresh={handleRefresh}
+        startDate=""
+        endDate=""
+        onStartDateChange={() => {}}
+        onEndDateChange={() => {}}
       />
     </div>
   )
