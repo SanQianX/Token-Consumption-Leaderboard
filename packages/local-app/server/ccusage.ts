@@ -29,7 +29,7 @@ export async function runCcusage(
   options: CcusageOptions = {},
 ): Promise<string> {
   const args = buildArgs(command, options)
-  const cmd = ["npx", "ccusage@latest", ...args].join(" ")
+  const cmd = ["npx", "ccusage@18.0.11", ...args].join(" ")
 
   const { stdout } = await execAsync(cmd, {
     maxBuffer: 10 * 1024 * 1024,

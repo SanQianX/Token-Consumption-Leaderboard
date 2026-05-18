@@ -4,7 +4,7 @@ export function transformDailyData(raw: Record<string, unknown>) {
     ...raw,
     daily: raw.daily.map((entry: Record<string, unknown>) => ({
       ...entry,
-      date: entry.period ?? entry.date,
+      date: entry.date ?? entry.period,
     })),
   }
 }
@@ -15,7 +15,7 @@ export function transformMonthlyData(raw: Record<string, unknown>) {
     ...raw,
     monthly: raw.monthly.map((entry: Record<string, unknown>) => ({
       ...entry,
-      month: entry.period ?? entry.month,
+      month: entry.month ?? entry.period,
     })),
   }
 }
