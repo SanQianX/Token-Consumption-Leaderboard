@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Trophy } from "lucide-react"
+import { Trophy, User } from "lucide-react"
 import { formatTokens, formatCost } from "@/lib/format"
 import { Link } from "react-router"
 import { fetchLeaderboard } from "@/lib/remote-api"
@@ -31,6 +31,7 @@ export function LeaderboardPage() {
   const [period, setPeriod] = useState<LeaderboardPeriod>("all_time")
   const [sort, setSort] = useState<LeaderboardSort>("tokens")
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [myRank, setMyRank] = useState<LeaderboardEntry | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -44,9 +45,10 @@ export function LeaderboardPage() {
     setLoading(true)
     setError(null)
 
-    fetchLeaderboard({ period, sort, page, limit: 50 })
+    fetchLeaderboard({ period, sort, page, limit: 50, username: user?.username })
       .then((data) => {
         setEntries(data.entries)
+        setMyRank(data.myRank || null)
         setTotalPages(data.totalPages)
         setLoading(false)
       })
@@ -54,7 +56,7 @@ export function LeaderboardPage() {
         setError((err as Error).message)
         setLoading(false)
       })
-  }, [period, sort, page])
+  }, [period, sort, page, user?.username])
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -176,53 +178,63 @@ export function LeaderboardPage() {
                     </td>
                   </tr>
                 ) : (
-                  entries.map((entry) => (
-                    <tr
-                      key={entry.username}
-                      className="border-b last:border-0 transition-colors hover:bg-muted/50"
-                    >
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-sm font-bold ${
-                            entry.rank <= 3
-                              ? "text-chart-4"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          #{entry.rank}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link
-                          to={`/profile/${entry.username}`}
-                          className="flex items-center gap-3 transition-colors hover:text-primary"
-                        >
-                          {entry.avatar_url ? (
-                            <img
-                              src={entry.avatar_url}
-                              alt={entry.display_name || entry.username}
-                              className="h-8 w-8 rounded-full"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                              {(entry.display_name || entry.username)
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-                          )}
-                          <span className="text-sm font-medium">
-                            {entry.display_name || entry.username}
+                  entries.map((entry) => {
+                    const isMe = user && entry.username === user.username
+                    return (
+                      <tr
+                        key={entry.username}
+                        className={`border-b last:border-0 transition-colors hover:bg-muted/50 ${
+                          isMe ? "bg-primary/10" : ""
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-sm font-bold ${
+                              entry.rank <= 3
+                                ? "text-chart-4"
+                                : "text-muted-foreground"
+                            }`}
+                          >
+                            #{entry.rank}
                           </span>
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-sm">
-                        {formatTokens(entry.total_tokens)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-sm">
-                        {formatCost(entry.total_cost)}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            to={`/profile/${entry.username}`}
+                            className="flex items-center gap-3 transition-colors hover:text-primary"
+                          >
+                            {entry.avatar_url ? (
+                              <img
+                                src={entry.avatar_url}
+                                alt={entry.display_name || entry.username}
+                                className="h-8 w-8 rounded-full"
+                              />
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                                {(entry.display_name || entry.username)
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-sm font-medium">
+                              {entry.display_name || entry.username}
+                            </span>
+                            {isMe && (
+                              <span className="rounded bg-primary/20 px-1.5 py-0.5 text-xs font-medium text-primary">
+                                You
+                              </span>
+                            )}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm">
+                          {formatTokens(entry.total_tokens)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm">
+                          {formatCost(entry.total_cost)}
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
@@ -253,6 +265,58 @@ export function LeaderboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Personal rank card */}
+      {user && !loading && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <User className="h-4 w-4" />
+              Your Ranking
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {myRank ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">#{myRank.rank}</p>
+                    <p className="text-xs text-muted-foreground">Rank</p>
+                  </div>
+                  <div className="h-10 w-px bg-border" />
+                  <div>
+                    <p className="text-sm font-medium">{formatTokens(myRank.total_tokens)}</p>
+                    <p className="text-xs text-muted-foreground">Tokens</p>
+                  </div>
+                  <div className="h-10 w-px bg-border" />
+                  <div>
+                    <p className="text-sm font-medium">{formatCost(myRank.total_cost)}</p>
+                    <p className="text-xs text-muted-foreground">Cost</p>
+                  </div>
+                </div>
+                <Link
+                  to={`/profile/${user.username}`}
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  View Profile
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  You haven't submitted any data yet.
+                </p>
+                <Link
+                  to="/settings"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Go to Settings to submit
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

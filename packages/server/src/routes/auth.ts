@@ -370,9 +370,10 @@ router.get("/api/auth/me", authMiddleware, async (req: AuthRequest, res) => {
 // POST /api/auth/api-token — Generate API token
 // ============================================
 router.post("/api/auth/api-token", authMiddleware, async (req: AuthRequest, res) => {
-  const { name = "default" } = req.body as { name?: string }
-
   try {
+    // Delete any existing tokens for this user (one token per user)
+    await query("DELETE FROM api_tokens WHERE user_id = $1", [req.userId])
+
     const rawToken = `tl_${uuidv4().replace(/-/g, "")}`
     const tokenHash = createHash("sha256").update(rawToken).digest("hex")
     const tokenPrefix = rawToken.slice(0, 10)
@@ -380,10 +381,10 @@ router.post("/api/auth/api-token", authMiddleware, async (req: AuthRequest, res)
     await query(
       `INSERT INTO api_tokens (user_id, token_hash, token_prefix, name)
        VALUES ($1, $2, $3, $4)`,
-      [req.userId, tokenHash, tokenPrefix, name]
+      [req.userId, tokenHash, tokenPrefix, "default"]
     )
 
-    res.json({ token: rawToken, prefix: tokenPrefix, name })
+    res.json({ token: rawToken, prefix: tokenPrefix })
   } catch (err) {
     console.error("API token creation error:", err)
     res.status(500).json({ error: "Failed to create API token" })

@@ -89,6 +89,7 @@ export async function fetchLeaderboard(params: {
   sort?: string
   page?: number
   limit?: number
+  username?: string
 }) {
   const serverUrl = getServerUrl()
   const qs = new URLSearchParams()
@@ -96,8 +97,13 @@ export async function fetchLeaderboard(params: {
   if (params.sort) qs.set("sort", params.sort)
   if (params.page) qs.set("page", String(params.page))
   if (params.limit) qs.set("limit", String(params.limit))
+  if (params.username) qs.set("username", params.username)
 
-  const res = await fetch(`${serverUrl}/api/leaderboard?${qs}`)
+  const token = getStoredToken()
+  const headers: Record<string, string> = {}
+  if (token) headers["Authorization"] = `Bearer ${token}`
+
+  const res = await fetch(`${serverUrl}/api/leaderboard?${qs}`, { headers })
   return res.json()
 }
 
