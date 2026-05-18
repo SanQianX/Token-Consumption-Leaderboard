@@ -47,7 +47,10 @@ export function HomePage() {
       let since: string | undefined
       let until: string | undefined
 
-      if (m === "daily" || m === "monthly") {
+      if (m === "daily") {
+        since = localToday()
+        until = localToday()
+      } else if (m === "monthly") {
         since = localFirstDayOfMonth()
         until = localToday()
       } else if (m === "custom") {
