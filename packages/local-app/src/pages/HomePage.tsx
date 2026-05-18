@@ -16,10 +16,9 @@ function today(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-function thirtyDaysAgo(): string {
+function firstDayOfMonth(): string {
   const d = new Date()
-  d.setDate(d.getDate() - 30)
-  return d.toISOString().slice(0, 10)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`
 }
 
 export function HomePage() {
@@ -29,7 +28,7 @@ export function HomePage() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  const [startDate, setStartDate] = useState(thirtyDaysAgo())
+  const [startDate, setStartDate] = useState(firstDayOfMonth())
   const [endDate, setEndDate] = useState(today())
 
   const load = useCallback(async (m: ViewMode, isManualRefresh = false) => {
@@ -41,8 +40,17 @@ export function HomePage() {
     setError(null)
 
     try {
-      const since = m === "custom" ? startDate : undefined
-      const until = m === "custom" ? endDate : undefined
+      let since: string | undefined
+      let until: string | undefined
+
+      if (m === "daily") {
+        since = firstDayOfMonth()
+        until = today()
+      } else if (m === "custom") {
+        since = startDate
+        until = endDate
+      }
+
       const result = await fetchData(m, since, until)
 
       if (result.data) {
