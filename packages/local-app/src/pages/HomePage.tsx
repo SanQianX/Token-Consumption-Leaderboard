@@ -37,6 +37,7 @@ export function HomePage() {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [startDate, setStartDate] = useState(localFirstDayOfMonth())
   const [endDate, setEndDate] = useState(localToday())
+
   useEffect(() => {
     let cancelled = false
 
@@ -47,13 +48,7 @@ export function HomePage() {
       let since: string | undefined
       let until: string | undefined
 
-      if (m === "daily") {
-        since = localToday()
-        until = localToday()
-      } else if (m === "monthly") {
-        since = localFirstDayOfMonth()
-        until = localToday()
-      } else if (m === "custom") {
+      if (m === "custom") {
         since = startDate
         until = endDate
       }
@@ -85,10 +80,7 @@ export function HomePage() {
     let since: string | undefined
     let until: string | undefined
 
-    if (mode === "daily" || mode === "monthly") {
-      since = localFirstDayOfMonth()
-      until = localToday()
-    } else if (mode === "custom") {
+    if (mode === "custom") {
       since = startDate
       until = endDate
     }

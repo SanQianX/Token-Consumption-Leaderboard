@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { Header } from "@/components/layout/Header"
 import { KpiCards } from "@/components/dashboard/KpiCards"
 import { TrendChart } from "@/components/dashboard/TrendChart"
@@ -6,6 +7,8 @@ import type {
   ViewMode,
   DailyResponse,
   MonthlyResponse,
+  DailyEntry,
+  MonthlyEntry,
   Totals,
 } from "@/lib/types"
 import { formatDate } from "@/lib/format"
@@ -14,48 +17,6 @@ type ViewData =
   | DailyResponse
   | MonthlyResponse
   | null
-
-function getTotals(_mode: ViewMode, data: ViewData): Totals | null {
-  if (!data) return null
-  if ("totals" in data) return data.totals
-  return null
-}
-
-function getChartData(
-  mode: ViewMode,
-  data: ViewData,
-): { label: string; totalTokens: number; totalCost: number }[] {
-  if (!data) return []
-  if ((mode === "daily" || mode === "custom" || mode === "alltime") && "daily" in data) {
-    return data.daily.map((d) => ({
-      label: formatDate(d.date),
-      totalTokens: d.totalTokens,
-      totalCost: d.totalCost,
-    }))
-  }
-  if (mode === "monthly" && "monthly" in data) {
-    return data.monthly.map((m) => ({
-      label: m.month,
-      totalTokens: m.totalTokens,
-      totalCost: m.totalCost,
-    }))
-  }
-  return []
-}
-
-function getTableData(
-  mode: ViewMode,
-  data: ViewData,
-): (Record<string, unknown> & { _type: ViewMode })[] {
-  if (!data) return []
-  if ((mode === "daily" || mode === "custom" || mode === "alltime") && "daily" in data) {
-    return data.daily.map((d) => ({ ...d, _type: "daily" as const }))
-  }
-  if (mode === "monthly" && "monthly" in data) {
-    return data.monthly.map((m) => ({ ...m, _type: "monthly" as const }))
-  }
-  return []
-}
 
 interface DashboardViewProps {
   mode: ViewMode
@@ -72,6 +33,45 @@ interface DashboardViewProps {
   onEndDateChange: (date: string) => void
 }
 
+function today(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+function firstDayOfMonth(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`
+}
+
+function computeTotals(entries: { inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; totalCost: number }[]): Totals {
+  return {
+    inputTokens: entries.reduce((s, e) => s + e.inputTokens, 0),
+    outputTokens: entries.reduce((s, e) => s + e.outputTokens, 0),
+    cacheCreationTokens: entries.reduce((s, e) => s + e.cacheCreationTokens, 0),
+    cacheReadTokens: entries.reduce((s, e) => s + e.cacheReadTokens, 0),
+    totalTokens: entries.reduce((s, e) => s + e.totalTokens, 0),
+    totalCost: entries.reduce((s, e) => s + e.totalCost, 0),
+  }
+}
+
+function filterDailyByRange(entries: DailyEntry[], since: string, until: string): DailyEntry[] {
+  return entries.filter((e) => {
+    const d = e.date
+    if (d < since) return false
+    if (d > until) return false
+    return true
+  })
+}
+
+function filterMonthlyByRange(entries: MonthlyEntry[], since: string, until: string): MonthlyEntry[] {
+  return entries.filter((e) => {
+    const m = e.month
+    if (m < since.slice(0, 7)) return false
+    if (m > until.slice(0, 7)) return false
+    return true
+  })
+}
+
 export function DashboardView({
   mode,
   data,
@@ -86,9 +86,53 @@ export function DashboardView({
   onStartDateChange,
   onEndDateChange,
 }: DashboardViewProps) {
-  const totals = getTotals(mode, data)
-  const chartData = getChartData(mode, data)
-  const tableData = getTableData(mode, data)
+  const { chartData, kpiTotals, tableData } = useMemo(() => {
+    if (!data) return { chartData: [], kpiTotals: null, tableData: [] }
+
+    if (mode === "daily") {
+      const entries = "daily" in data ? data.daily : []
+      const todayStr = today()
+      const todayEntries = filterDailyByRange(entries, todayStr, todayStr)
+      return {
+        chartData: entries.map((d) => ({ label: formatDate(d.date), totalTokens: d.totalTokens, totalCost: d.totalCost })),
+        kpiTotals: computeTotals(todayEntries),
+        tableData: entries.map((d) => ({ ...d, _type: "daily" as const })),
+      }
+    }
+
+    if (mode === "monthly") {
+      const entries = "monthly" in data ? data.monthly : []
+      const since = firstDayOfMonth()
+      const todayStr = today()
+      const monthEntries = filterMonthlyByRange(entries, since, todayStr)
+      return {
+        chartData: entries.map((m) => ({ label: m.month, totalTokens: m.totalTokens, totalCost: m.totalCost })),
+        kpiTotals: computeTotals(monthEntries),
+        tableData: entries.map((m) => ({ ...m, _type: "monthly" as const })),
+      }
+    }
+
+    if (mode === "alltime") {
+      const entries = "daily" in data ? data.daily : []
+      return {
+        chartData: entries.map((d) => ({ label: formatDate(d.date), totalTokens: d.totalTokens, totalCost: d.totalCost })),
+        kpiTotals: "totals" in data ? data.totals : null,
+        tableData: entries.map((d) => ({ ...d, _type: "daily" as const })),
+      }
+    }
+
+    if (mode === "custom") {
+      const entries = "daily" in data ? data.daily : []
+      const filtered = filterDailyByRange(entries, startDate, endDate)
+      return {
+        chartData: entries.map((d) => ({ label: formatDate(d.date), totalTokens: d.totalTokens, totalCost: d.totalCost })),
+        kpiTotals: computeTotals(filtered),
+        tableData: filtered.map((d) => ({ ...d, _type: "daily" as const })),
+      }
+    }
+
+    return { chartData: [], kpiTotals: null, tableData: [] }
+  }, [mode, data, startDate, endDate])
 
   return (
     <>
@@ -109,7 +153,7 @@ export function DashboardView({
             Error: {error}
           </div>
         )}
-        <KpiCards totals={totals} loading={loading && !data} />
+        <KpiCards totals={kpiTotals} loading={loading && !data} />
         <TrendChart data={chartData} loading={loading && !data} />
         <DataTable
           mode={mode}
