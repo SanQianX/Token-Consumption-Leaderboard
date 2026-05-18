@@ -51,5 +51,12 @@ export default defineConfig({
       testMatch: "oauth-debug.spec.ts",
       use: {},
     },
+    {
+      name: "api-token-and-ranking",
+      testMatch: "api-token-and-ranking.spec.ts",
+      use: {
+        ignoreHTTPSErrors: true,
+      },
+    },
   ],
 })

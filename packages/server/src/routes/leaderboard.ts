@@ -1,10 +1,11 @@
 import { Router } from "express"
 import { getLeaderboardFromCache } from "../services/leaderboard-cache.js"
+import { optionalAuth, type AuthRequest } from "../middleware/auth.js"
 
 const router = Router()
 
 // GET /api/leaderboard
-router.get("/api/leaderboard", async (req, res) => {
+router.get("/api/leaderboard", optionalAuth, async (req: AuthRequest, res) => {
   const period = (req.query.period as string) || "all_time"
   const sort = (req.query.sort as string) || "tokens"
   const page = Math.max(1, parseInt(req.query.page as string) || 1)
@@ -18,18 +19,26 @@ router.get("/api/leaderboard", async (req, res) => {
   try {
     const { data, updatedAt, stale } = await getLeaderboardFromCache(period)
 
-    // Sort
-    const sorted = [...(data as Array<Record<string, unknown>>)].sort((a, b) => {
+    type RankEntry = { rank: number; username: string; total_tokens: number; total_cost: number }
+    const sorted = [...(data as RankEntry[])].sort((a, b) => {
       if (sort === "cost") {
-        return ((b.total_cost as number) || 0) - ((a.total_cost as number) || 0)
+        return (b.total_cost || 0) - (a.total_cost || 0)
       }
-      return ((b.total_tokens as number) || 0) - ((a.total_tokens as number) || 0)
+      return (b.total_tokens || 0) - (a.total_tokens || 0)
     })
 
-    // Paginate
+    // Re-rank after re-sorting
+    sorted.forEach((entry, i) => { entry.rank = i + 1 })
+
     const total = sorted.length
     const start = (page - 1) * limit
     const entries = sorted.slice(start, start + limit)
+
+    // Find the current user's rank
+    const targetUsername = req.username || (req.query.username as string | undefined)
+    const myRankEntry = targetUsername
+      ? sorted.find(e => e.username === targetUsername) || null
+      : null
 
     res.json({
       entries,
@@ -39,6 +48,7 @@ router.get("/api/leaderboard", async (req, res) => {
       total,
       updatedAt,
       stale,
+      myRank: myRankEntry,
     })
   } catch (err) {
     console.error("Leaderboard error:", err)

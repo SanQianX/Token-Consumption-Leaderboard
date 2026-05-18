@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, TestTube } from "lucide-react"
+import { Settings, TestTube, Key, Copy, Check } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { createApiToken } from "@/lib/remote-api"
 
 interface SettingsData {
   serverUrl: string
@@ -14,6 +16,7 @@ interface SettingsData {
 }
 
 export function SettingsPage() {
+  const { user, loading: authLoading } = useAuth()
   const [settings, setSettings] = useState<SettingsData>({
     serverUrl: "https://124.220.17.38",
     apiToken: "",
@@ -25,8 +28,11 @@ export function SettingsPage() {
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [testing, setTesting] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/settings")
@@ -38,17 +44,22 @@ export function SettingsPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const handleSave = async () => {
+  const handleSave = async (tokenToSave?: string) => {
     setSaving(true)
     setMessage(null)
     try {
+      const payload = {
+        ...settings,
+        apiToken: tokenToSave ?? settings.apiToken,
+      }
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (res.ok) {
+        setSettings((s) => ({ ...s, apiToken: payload.apiToken, _hasApiToken: !!payload.apiToken }))
         setMessage({ type: "success", text: "Settings saved" })
       } else {
         setMessage({ type: "error", text: data.error || "Failed to save" })
@@ -57,6 +68,46 @@ export function SettingsPage() {
       setMessage({ type: "error", text: "Failed to save settings" })
     }
     setSaving(false)
+  }
+
+  const handleGenerateToken = async () => {
+    setGenerating(true)
+    setMessage(null)
+    try {
+      const data = await createApiToken()
+      if (data.token) {
+        setGeneratedToken(data.token)
+        setSettings((s) => ({ ...s, apiToken: data.token, _hasApiToken: true }))
+        // Auto-save with the new token
+        await handleSave(data.token)
+        setMessage({ type: "success", text: "API token generated and saved" })
+      } else {
+        setMessage({ type: "error", text: data.error || "Failed to generate token" })
+      }
+    } catch {
+      setMessage({ type: "error", text: "Failed to generate token. Are you logged in?" })
+    }
+    setGenerating(false)
+  }
+
+  const handleCopy = async () => {
+    const tokenToCopy = generatedToken || settings.apiToken
+    if (!tokenToCopy || tokenToCopy.includes("*")) return
+    try {
+      await navigator.clipboard.writeText(tokenToCopy)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback
+      const textarea = document.createElement("textarea")
+      textarea.value = tokenToCopy
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand("copy")
+      document.body.removeChild(textarea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   const handleTestSubmit = async () => {
@@ -69,7 +120,7 @@ export function SettingsPage() {
         if (data.duplicate) {
           setMessage({ type: "success", text: "Data already submitted (duplicate)" })
         } else {
-          setMessage({ type: "success", text: `Submitted! Tokens: ${data.totalTokens}, Cost: ${data.totalCost}` })
+          setMessage({ type: "success", text: `Submitted! Tokens: ${data.totalTokens}, Cost: $${data.totalCost?.toFixed(2)}` })
         }
       } else {
         setMessage({ type: "error", text: data.error || "Test failed" })
@@ -90,6 +141,9 @@ export function SettingsPage() {
       </div>
     )
   }
+
+  const showPlainToken = !!generatedToken
+  const displayToken = showPlainToken ? generatedToken : settings.apiToken
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
@@ -118,6 +172,63 @@ export function SettingsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            API Token
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!user && !authLoading && (
+            <div className="rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+              Please log in first to generate an API token.
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">
+              {settings._hasApiToken ? "API Token (configured)" : "API Token"}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type={showPlainToken ? "text" : "password"}
+                value={displayToken}
+                onChange={(e) => {
+                  setSettings({ ...settings, apiToken: e.target.value })
+                  setGeneratedToken(null)
+                }}
+                placeholder={settings._hasApiToken ? "Token configured (hidden)" : "tl_xxxxx..."}
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <Button
+                onClick={handleGenerateToken}
+                disabled={generating || !user}
+                variant={settings._hasApiToken ? "outline" : "default"}
+                className="shrink-0"
+              >
+                {generating ? "Generating..." : settings._hasApiToken ? "Regenerate" : "Generate"}
+              </Button>
+              {(showPlainToken || (settings.apiToken && !settings.apiToken.includes("*"))) && (
+                <Button onClick={handleCopy} variant="outline" size="icon" className="shrink-0">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              )}
+            </div>
+            {generatedToken && (
+              <p className="mt-1.5 text-xs text-amber-600">
+                Copy this token now. It will be hidden after you refresh the page.
+              </p>
+            )}
+            {!generatedToken && !settings._hasApiToken && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Click "Generate" to create an API token linked to your account.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Auto Submit</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -140,20 +251,6 @@ export function SettingsPage() {
                 }`}
               />
             </button>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">API Token</label>
-            <input
-              type="password"
-              value={settings.apiToken}
-              onChange={(e) => setSettings({ ...settings, apiToken: e.target.value })}
-              placeholder={settings._hasApiToken ? "Token configured (hidden)" : "tl_xxxxx..."}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Generate an API token from the remote server after logging in
-            </p>
           </div>
 
           <div>
@@ -202,7 +299,7 @@ export function SettingsPage() {
       )}
 
       <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={() => handleSave()} disabled={saving}>
           {saving ? "Saving..." : "Save Settings"}
         </Button>
         <Button onClick={handleTestSubmit} disabled={testing} variant="outline" className="gap-2">
