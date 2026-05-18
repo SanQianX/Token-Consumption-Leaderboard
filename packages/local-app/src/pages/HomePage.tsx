@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { DashboardView } from "@/components/dashboard/DashboardView"
 import { fetchData } from "@/lib/api"
 import type {
@@ -12,11 +12,18 @@ type ViewData =
   | MonthlyResponse
   | null
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
+function localDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
 }
 
-function firstDayOfMonth(): string {
+function localToday(): string {
+  return localDate(new Date())
+}
+
+function localFirstDayOfMonth(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`
 }
@@ -28,58 +35,72 @@ export function HomePage() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  const [startDate, setStartDate] = useState(firstDayOfMonth())
-  const [endDate, setEndDate] = useState(today())
+  const [startDate, setStartDate] = useState(localFirstDayOfMonth())
+  const [endDate, setEndDate] = useState(localToday())
+  useEffect(() => {
+    let cancelled = false
 
-  const load = useCallback(async (m: ViewMode, isManualRefresh = false) => {
-    if (!isManualRefresh) {
+    async function load(m: ViewMode) {
       setLoading(true)
-    } else {
-      setRefreshing(true)
-    }
-    setError(null)
+      setError(null)
 
-    try {
       let since: string | undefined
       let until: string | undefined
 
       if (m === "daily") {
-        since = firstDayOfMonth()
-        until = today()
+        since = localFirstDayOfMonth()
+        until = localToday()
       } else if (m === "custom") {
         since = startDate
         until = endDate
       }
 
-      const result = await fetchData(m, since, until)
+      try {
+        const result = await fetchData(m, since, until)
+        if (cancelled) return
 
+        if (result.data) {
+          setData(result.data)
+        }
+        setUpdatedAt(result.updatedAt)
+        setLoading(false)
+      } catch (err) {
+        if (cancelled) return
+        setError((err as Error).message)
+        setLoading(false)
+      }
+    }
+
+    load(mode)
+    return () => { cancelled = true }
+  }, [mode, startDate, endDate])
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    setError(null)
+
+    let since: string | undefined
+    let until: string | undefined
+
+    if (mode === "daily") {
+      since = localFirstDayOfMonth()
+      until = localToday()
+    } else if (mode === "custom") {
+      since = startDate
+      until = endDate
+    }
+
+    try {
+      const result = await fetchData(mode, since, until)
       if (result.data) {
         setData(result.data)
       }
-
       setUpdatedAt(result.updatedAt)
-      setLoading(false)
       setRefreshing(false)
     } catch (err) {
       setError((err as Error).message)
-      setLoading(false)
       setRefreshing(false)
     }
-  }, [startDate, endDate])
-
-  useEffect(() => {
-    load(mode)
-  }, [mode, load])
-
-  const handleModeChange = (m: ViewMode) => {
-    setMode(m)
-    setData(null)
-    setError(null)
-    setUpdatedAt(null)
-  }
-
-  const handleRefresh = () => {
-    load(mode, true)
   }
 
   return (
@@ -90,7 +111,12 @@ export function HomePage() {
       refreshing={refreshing}
       error={error}
       updatedAt={updatedAt}
-      onModeChange={handleModeChange}
+      onModeChange={(m) => {
+        setMode(m)
+        setData(null)
+        setError(null)
+        setUpdatedAt(null)
+      }}
       onRefresh={handleRefresh}
       startDate={startDate}
       endDate={endDate}
