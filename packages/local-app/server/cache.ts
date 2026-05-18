@@ -108,8 +108,8 @@ function groupByMonth(entries: DailyEntry[]): MonthlyEntry[] {
   }>()
 
   for (const entry of entries) {
-    const period = entry.period ?? entry.date ?? ""
-    const month = period.slice(0, 7) // "2026-05"
+    const dateStr = entry.date ?? entry.period ?? ""
+    const month = dateStr.slice(0, 7) // "2026-05"
 
     if (!monthMap.has(month)) {
       monthMap.set(month, {
@@ -166,18 +166,17 @@ export function deriveView(command: string, options: CcusageOptions, rawData: Ra
   // Apply date filters for custom range
   if (options.since || options.until) {
     daily = daily.filter((entry) => {
-      const period = entry.period ?? entry.date ?? ""
-      if (options.since && period < options.since) return false
-      if (options.until && period > options.until) return false
+      const dateStr = entry.date ?? entry.period ?? ""
+      if (options.since && dateStr < options.since) return false
+      if (options.until && dateStr > options.until) return false
       return true
     })
   }
 
   if (command === "daily" || command === "custom" || command === "alltime") {
-    // Transform period → date
     const transformed = daily.map((entry) => ({
       ...entry,
-      date: entry.period ?? entry.date,
+      date: entry.date ?? entry.period,
     }))
     return {
       daily: transformed,

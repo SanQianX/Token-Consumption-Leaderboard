@@ -4,23 +4,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { setStoredToken } from "@/lib/remote-api"
 
+// Eagerly capture token from URL at module load time, before anything else can clear it
+const initialSearch = typeof window !== "undefined" ? window.location.search : ""
+const initialParams = new URLSearchParams(initialSearch)
+const capturedToken = initialParams.get("token")
+const capturedReturnTo = initialParams.get("return_to")
+
 export function AuthCallbackPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // JWT token comes via URL query param from the remote server OAuth callback
-    const params = new URLSearchParams(window.location.search)
-    const token = params.get("token")
+    const token = capturedToken
+    const returnTo = capturedReturnTo
 
-    if (token) {
-      setStoredToken(token)
-      // Clean URL and redirect
-      window.history.replaceState({}, "", "/")
-      navigate("/", { replace: true })
-    } else {
-      // No token found
+    if (!token) {
       navigate("/login?error=no_token", { replace: true })
+      return
     }
+
+    setStoredToken(token)
+
+    if (returnTo && /^http:\/\/localhost(:\d+)?$/.test(returnTo)) {
+      window.location.href = `${returnTo}/auth/callback?token=${encodeURIComponent(token)}`
+      return
+    }
+
+    navigate("/", { replace: true })
   }, [navigate])
 
   return (
