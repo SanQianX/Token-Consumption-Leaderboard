@@ -1,7 +1,7 @@
 {
   "name": "token-leaderboard",
   "version": "2.0.0",
-  "description": "Token Consumption Leaderboard — local dashboard + auto-submit to remote ranking",
+  "description": "TokenMeter — local ccusage token consumption dashboard",
   "type": "module",
   "bin": {
     "token-leaderboard": "./dist-server/bin.js"

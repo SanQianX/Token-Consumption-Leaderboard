@@ -4,7 +4,6 @@ import path from "node:path"
 import { existsSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { router } from "./routes.js"
-import { startSubmitWorker } from "./submit-worker.js"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -31,8 +30,7 @@ export function createApp() {
 export function startServer(port = 3001) {
   const app = createApp()
   app.listen(port, () => {
-    console.log(`Token Leaderboard running at http://localhost:${port}`)
-    startSubmitWorker()
+    console.log(`TokenMeter running at http://localhost:${port}`)
   })
 }
 

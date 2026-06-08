@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router"
 import { Navbar } from "@/components/layout/Navbar"
 import { HomePage } from "@/pages/HomePage"
-import { SettingsPage } from "@/pages/SettingsPage"
 
 function App() {
   return (
@@ -9,7 +8,6 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

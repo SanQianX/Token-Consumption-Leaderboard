@@ -4,17 +4,11 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter local-app dev",
-    "dev:local": "pnpm --filter local-app dev",
-    "dev:server": "pnpm --filter server dev",
-    "build": "pnpm --filter local-app build",
-    "build:remote": "VITE_APP_MODE=remote pnpm --filter local-app build",
-    "build:server": "pnpm --filter server build",
+    "dev": "pnpm --filter token-leaderboard dev",
+    "dev:local": "pnpm --filter token-leaderboard dev",
+    "build": "pnpm --filter token-leaderboard build",
     "test": "playwright test",
-    "test:server": "playwright test --project=server-api",
-    "test:remote": "playwright test --project=remote-frontend",
-    "test:local": "playwright test --project=local-dashboard",
-    "test:settings": "playwright test --project=settings-api"
+    "test:local": "playwright test --project=local-app"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0"

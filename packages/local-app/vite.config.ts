@@ -5,9 +5,6 @@ import tailwindcss from "@tailwindcss/vite"
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  define: {
-    "import.meta.env.VITE_APP_MODE": JSON.stringify(process.env.VITE_APP_MODE || "local"),
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

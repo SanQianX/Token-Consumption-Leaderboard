@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router"
-import { LayoutDashboard, Settings } from "lucide-react"
+import { LayoutDashboard } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function Navbar() {
@@ -24,18 +24,6 @@ export function Navbar() {
             >
               <LayoutDashboard className="h-4 w-4" />
               Dashboard
-            </Link>
-            <Link
-              to="/settings"
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                location.pathname === "/settings"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <Settings className="h-4 w-4" />
-              Settings
             </Link>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { Router } from "express"
 import { type CcusageOptions } from "./ccusage.js"
 import { readDailyCache, fetchAndCacheDaily, isRefreshingCache, deriveView } from "./cache.js"
-import { createSettingsRoutes } from "./settings-routes.js"
 
 const router = Router()
 
@@ -55,8 +54,5 @@ router.get("/api/daily", makeHandler("daily"))
 router.get("/api/monthly", makeHandler("monthly"))
 router.get("/api/session", makeHandler("daily"))
 router.get("/api/blocks", makeHandler("daily"))
-
-// Settings routes
-router.use(createSettingsRoutes())
 
 export { router }

@@ -44,16 +44,11 @@ dev-debug.log
 *.sw?
 # OS specific
 
-# Task files
-# tasks.json
-# tasks/
-
 # Dev tools
 .claude/
 .codex/
-.mcp.json
 .taskmaster/
-AGENTS.md
+.mcp.json
 knowledge/
 
 # Screenshots
@@ -62,3 +57,7 @@ screenshot-*.png
 
 # Build output
 dist-server/
+
+# Task files
+# tasks.json
+# tasks/ 

@@ -34,12 +34,9 @@ test.describe("Local Dashboard", () => {
       await expect(link).toBeVisible()
     })
 
-    test("navigates to Settings page", async ({ page }) => {
+    test("does NOT show Settings link (local-only app)", async ({ page }) => {
       const link = page.locator('nav a:has-text("Settings")')
-      await expect(link).toBeVisible()
-      await link.click()
-      await page.waitForLoadState("networkidle")
-      expect(page.url()).toContain("settings")
+      await expect(link).toHaveCount(0)
     })
 
     test("does NOT show Sign in button in local mode", async ({ page }) => {
@@ -90,65 +87,11 @@ test.describe("Local Dashboard", () => {
   })
 
   // ============================================
-  // Settings Page
+  // Catch-all redirects (no remote routes in local mode)
   // ============================================
-  test.describe("Settings Page", () => {
-    test.beforeEach(async ({ page }) => {
+  test.describe("Route isolation", () => {
+    test("/settings redirects to home", async ({ page }) => {
       await page.goto(`${FRONTEND_URL}/settings`)
-      await page.waitForLoadState("networkidle")
-    })
-
-    test("displays Settings title", async ({ page }) => {
-      const title = page.locator('h1:has-text("Settings")')
-      await expect(title).toBeVisible()
-    })
-
-    test("has TokenRank Cloud card with URL input", async ({ page }) => {
-      const cardTitle = page.locator('[data-slot="card-title"]:has-text("TokenRank Cloud")')
-      await expect(cardTitle).toBeVisible()
-
-      const input = page.locator('input[type="url"]')
-      await expect(input).toBeVisible()
-    })
-
-    test("has API Token input (paste, no generate in local mode)", async ({ page }) => {
-      // In local mode, there's no Generate button — user pastes token
-      const input = page.locator('input[placeholder="tl_xxxxx..."], input[placeholder*="Token"], input[type="password"]')
-      await expect(input.first()).toBeVisible()
-
-      // No Generate button in local mode
-      const generateBtn = page.getByRole("button", { name: /generate/i })
-      await expect(generateBtn).toHaveCount(0)
-    })
-
-    test("has link to TokenRank Cloud login", async ({ page }) => {
-      const link = page.locator('a:has-text("Log in to TokenRank Cloud")')
-      await expect(link).toBeVisible()
-      expect(await link.getAttribute("target")).toBe("_blank")
-    })
-
-    test("has Auto Submit card with toggle", async ({ page }) => {
-      const cardTitle = page.locator('text=Auto Submit')
-      await expect(cardTitle).toBeVisible()
-    })
-
-    test("has Save Settings button", async ({ page }) => {
-      const btn = page.locator('button:has-text("Save Settings")')
-      await expect(btn).toBeVisible()
-    })
-
-    test("has Test Submit button", async ({ page }) => {
-      const btn = page.locator('button:has-text("Test Submit")')
-      await expect(btn).toBeVisible()
-    })
-  })
-
-  // ============================================
-  // Remote routes not accessible in local mode
-  // ============================================
-  test.describe("Remote route isolation", () => {
-    test("/login redirects to home", async ({ page }) => {
-      await page.goto(`${FRONTEND_URL}/login`)
       await page.waitForLoadState("networkidle")
       expect(page.url()).toBe(`${FRONTEND_URL}/`)
     })
@@ -165,8 +108,8 @@ test.describe("Local Dashboard", () => {
       expect(page.url()).toBe(`${FRONTEND_URL}/`)
     })
 
-    test("/auth/callback redirects to home", async ({ page }) => {
-      await page.goto(`${FRONTEND_URL}/auth/callback?token=test`)
+    test("/login redirects to home", async ({ page }) => {
+      await page.goto(`${FRONTEND_URL}/login`)
       await page.waitForLoadState("networkidle")
       expect(page.url()).toBe(`${FRONTEND_URL}/`)
     })
