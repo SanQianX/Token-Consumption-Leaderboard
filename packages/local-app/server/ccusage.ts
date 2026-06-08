@@ -1,7 +1,4 @@
-import { exec } from "node:child_process"
-import { promisify } from "node:util"
-
-const execAsync = promisify(exec)
+import { execFile } from "node:child_process"
 
 export interface CcusageOptions {
   since?: string
@@ -29,12 +26,20 @@ export async function runCcusage(
   options: CcusageOptions = {},
 ): Promise<string> {
   const args = buildArgs(command, options)
-  const cmd = ["npx", "ccusage@18.0.11", ...args].join(" ")
 
-  const { stdout } = await execAsync(cmd, {
-    maxBuffer: 10 * 1024 * 1024,
-    timeout: 120_000,
+  return new Promise((resolve, reject) => {
+    execFile("bun", ["x", "ccusage@20.0.6", ...args], {
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: 120_000,
+      env: { ...process.env },
+      windowsHide: true,
+      shell: false,
+    }, (err, stdout, stderr) => {
+      if (err) {
+        reject(new Error(`ccusage failed: ${err.message}\n${stderr?.slice(0, 200)}`))
+        return
+      }
+      resolve(stdout)
+    })
   })
-
-  return stdout
 }

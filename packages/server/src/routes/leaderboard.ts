@@ -8,8 +8,6 @@ const router = Router()
 router.get("/api/leaderboard", optionalAuth, async (req: AuthRequest, res) => {
   const period = (req.query.period as string) || "all_time"
   const sort = (req.query.sort as string) || "tokens"
-  const page = Math.max(1, parseInt(req.query.page as string) || 1)
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50))
 
   const validPeriods = ["all_time", "30d", "7d", "1d"]
   if (!validPeriods.includes(period)) {
@@ -31,10 +29,9 @@ router.get("/api/leaderboard", optionalAuth, async (req: AuthRequest, res) => {
     sorted.forEach((entry, i) => { entry.rank = i + 1 })
 
     const total = sorted.length
-    const start = (page - 1) * limit
-    const entries = sorted.slice(start, start + limit)
+    const entries = sorted.slice(0, 100)
 
-    // Find the current user's rank
+    // Find the current user's rank (from full sorted list, not just top 100)
     const targetUsername = req.username || (req.query.username as string | undefined)
     const myRankEntry = targetUsername
       ? sorted.find(e => e.username === targetUsername) || null
@@ -42,9 +39,6 @@ router.get("/api/leaderboard", optionalAuth, async (req: AuthRequest, res) => {
 
     res.json({
       entries,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
       total,
       updatedAt,
       stale,

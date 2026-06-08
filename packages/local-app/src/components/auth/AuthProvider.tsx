@@ -1,98 +1,17 @@
-import { createContext, useState, useEffect, useCallback, type ReactNode } from "react"
-import { setStoredToken, getMe } from "@/lib/remote-api"
-
-interface UserProfile {
-  username: string
-  display_name: string | null
-  avatar_url: string | null
-  bio: string | null
-}
-
-interface UserInfo {
-  id: string
-  username: string
-  is_admin?: boolean
-}
+import { createContext, type ReactNode } from "react"
 
 interface AuthContextType {
-  user: UserInfo | null
-  profile: UserProfile | null
-  loading: boolean
+  user: null
+  profile: null
+  loading: false
   logout: () => void
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserInfo | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // Only process token if NOT on /auth/callback (that page handles its own token)
-    if (window.location.pathname === "/auth/callback") {
-      // Load user from stored token only
-      const loadUser = async () => {
-        const token = localStorage.getItem("auth_token")
-        if (!token) {
-          setLoading(false)
-          return
-        }
-        try {
-          const data = await getMe()
-          if (data?.user) {
-            setUser(data.user)
-            setProfile(data.profile)
-          }
-        } catch {}
-        setLoading(false)
-      }
-      loadUser()
-      return
-    }
-
-    // Check for token from OAuth callback (other pages)
-    const params = new URLSearchParams(window.location.search)
-    const tokenParam = params.get("token")
-    if (tokenParam) {
-      setStoredToken(tokenParam)
-      // Clean URL
-      window.history.replaceState({}, "", window.location.pathname)
-    }
-
-    // Load user from stored token
-    const loadUser = async () => {
-      const token = localStorage.getItem("auth_token")
-      if (!token) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const data = await getMe()
-        if (data?.user) {
-          setUser(data.user)
-          setProfile(data.profile)
-        } else {
-          setStoredToken(null)
-        }
-      } catch {
-        setStoredToken(null)
-      }
-      setLoading(false)
-    }
-
-    loadUser()
-  }, [])
-
-  const logout = useCallback(() => {
-    setStoredToken(null)
-    setUser(null)
-    setProfile(null)
-  }, [])
-
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout }}>
+    <AuthContext.Provider value={{ user: null, profile: null, loading: false, logout: () => {} }}>
       {children}
     </AuthContext.Provider>
   )

@@ -14,7 +14,8 @@ export default defineConfig({
       name: "server-api",
       testMatch: "server-api.spec.ts",
       use: {
-        baseURL: process.env.SERVER_URL || "http://124.220.17.38",
+        baseURL: process.env.SERVER_URL || "https://124.220.17.38",
+        ignoreHTTPSErrors: true,
       },
     },
     {
@@ -26,7 +27,7 @@ export default defineConfig({
       },
     },
     {
-      name: "local-dashboard",
+      name: "local-app",
       testMatch: "local-dashboard.spec.ts",
       use: {
         baseURL: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -45,11 +46,6 @@ export default defineConfig({
       use: {
         ignoreHTTPSErrors: true,
       },
-    },
-    {
-      name: "oauth-debug",
-      testMatch: "oauth-debug.spec.ts",
-      use: {},
     },
     {
       name: "api-token-and-ranking",

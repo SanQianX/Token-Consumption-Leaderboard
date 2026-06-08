@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, TestTube, Key, Copy, Check } from "lucide-react"
+import { Settings, TestTube, Key, Copy, Check, ExternalLink } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
-import { createApiToken } from "@/lib/remote-api"
+import { createApiToken, getServerUrl } from "@/lib/remote-api"
+
+const APP_MODE = import.meta.env.VITE_APP_MODE || "local"
 
 interface SettingsData {
   serverUrl: string
@@ -78,7 +80,6 @@ export function SettingsPage() {
       if (data.token) {
         setGeneratedToken(data.token)
         setSettings((s) => ({ ...s, apiToken: data.token, _hasApiToken: true }))
-        // Auto-save with the new token
         await handleSave(data.token)
         setMessage({ type: "success", text: "API token generated and saved" })
       } else {
@@ -98,7 +99,6 @@ export function SettingsPage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback
       const textarea = document.createElement("textarea")
       textarea.value = tokenToCopy
       document.body.appendChild(textarea)
@@ -145,6 +145,11 @@ export function SettingsPage() {
   const showPlainToken = !!generatedToken
   const displayToken = showPlainToken ? generatedToken : settings.apiToken
 
+  // In local mode, user must go to TokenRank Cloud to generate API Token
+  // In remote mode, user can generate directly
+  const canGenerateToken = APP_MODE === "remote" && !!user
+  const serverUrl = settings.serverUrl || getServerUrl()
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <div className="flex items-center gap-2">
@@ -154,7 +159,7 @@ export function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Remote Server</CardTitle>
+          <CardTitle>TokenRank Cloud</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -166,6 +171,9 @@ export function SettingsPage() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="https://124.220.17.38"
             />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              The URL of your TokenRank Cloud server for uploading token data.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -178,7 +186,22 @@ export function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!user && !authLoading && (
+          {APP_MODE === "local" && (
+            <div className="rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+              To upload data, you need an API Token from TokenRank Cloud.{" "}
+              <a
+                href={`${serverUrl}/login`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Log in to TokenRank Cloud
+                <ExternalLink className="h-3 w-3" />
+              </a>{" "}
+              to generate one, then paste it below.
+            </div>
+          )}
+          {APP_MODE === "remote" && !user && !authLoading && (
             <div className="rounded-md border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
               Please log in first to generate an API token.
             </div>
@@ -199,14 +222,16 @@ export function SettingsPage() {
                 placeholder={settings._hasApiToken ? "Token configured (hidden)" : "tl_xxxxx..."}
                 className="flex-1 rounded-md border border-input bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
-              <Button
-                onClick={handleGenerateToken}
-                disabled={generating || !user}
-                variant={settings._hasApiToken ? "outline" : "default"}
-                className="shrink-0"
-              >
-                {generating ? "Generating..." : settings._hasApiToken ? "Regenerate" : "Generate"}
-              </Button>
+              {canGenerateToken && (
+                <Button
+                  onClick={handleGenerateToken}
+                  disabled={generating}
+                  variant={settings._hasApiToken ? "outline" : "default"}
+                  className="shrink-0"
+                >
+                  {generating ? "Generating..." : settings._hasApiToken ? "Regenerate" : "Generate"}
+                </Button>
+              )}
               {(showPlainToken || (settings.apiToken && !settings.apiToken.includes("*"))) && (
                 <Button onClick={handleCopy} variant="outline" size="icon" className="shrink-0">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -216,11 +241,6 @@ export function SettingsPage() {
             {generatedToken && (
               <p className="mt-1.5 text-xs text-amber-600">
                 Copy this token now. It will be hidden after you refresh the page.
-              </p>
-            )}
-            {!generatedToken && !settings._hasApiToken && (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Click "Generate" to create an API token linked to your account.
               </p>
             )}
           </div>

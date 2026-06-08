@@ -22,7 +22,13 @@ function makeHandler(command: string) {
     const options = parseOptions(req.query)
 
     try {
-      const cached = await readDailyCache()
+      let cached = readDailyCache()
+
+      if (!cached) {
+        // No cache yet — await the first fetch before responding
+        await fetchAndCacheDaily()
+        cached = readDailyCache()
+      }
 
       if (cached) {
         const derivedData = deriveView(command, options, cached.data as Parameters<typeof deriveView>[2])
@@ -33,14 +39,10 @@ function makeHandler(command: string) {
           refreshing: isRefreshingCache(),
         })
 
-        // Trigger background refresh (non-blocking)
+        // Trigger background refresh for next request
         fetchAndCacheDaily()
       } else {
-        // No cache yet — must wait for first fetch
         res.json({ data: null, loading: true, stale: false })
-
-        // Fetch in background, next request will have data
-        fetchAndCacheDaily()
       }
     } catch (error) {
       res.status(500).json({ error: (error as Error).message })

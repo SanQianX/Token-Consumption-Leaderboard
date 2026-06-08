@@ -1,6 +1,6 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises"
-import { join } from "node:path"
-import { existsSync } from "node:fs"
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
+import { join, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
 import { runCcusage, type CcusageOptions } from "./ccusage.js"
 
 interface CacheEntry {
@@ -8,55 +8,45 @@ interface CacheEntry {
   updatedAt: string
 }
 
-const CACHE_DIR = join(import.meta.dirname, "..", ".cache")
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const CACHE_DIR = join(__dirname, "..", ".cache")
 const DAILY_CACHE_FILE = join(CACHE_DIR, "daily.json")
 
-async function ensureCacheDir() {
-  if (!existsSync(CACHE_DIR)) {
-    await mkdir(CACHE_DIR, { recursive: true })
-  }
-}
-
-export async function readDailyCache(): Promise<CacheEntry | null> {
+export function readDailyCache(): CacheEntry | null {
   try {
-    const raw = await readFile(DAILY_CACHE_FILE, "utf-8")
+    const raw = readFileSync(DAILY_CACHE_FILE, "utf-8")
     return JSON.parse(raw) as CacheEntry
   } catch {
     return null
   }
 }
 
-async function writeDailyCache(data: unknown): Promise<void> {
-  await ensureCacheDir()
-  const entry: CacheEntry = { data, updatedAt: new Date().toISOString() }
-  await writeFile(DAILY_CACHE_FILE, JSON.stringify(entry), "utf-8")
-}
-
-// In-memory lock to prevent duplicate concurrent refreshes
-let refreshing = false
+let refreshPromise: Promise<void> | null = null
 
 export function isRefreshingCache(): boolean {
-  return refreshing
+  return refreshPromise !== null
 }
 
-export async function fetchAndCacheDaily(): Promise<void> {
-  if (refreshing) return
+export function fetchAndCacheDaily(): Promise<void> {
+  if (refreshPromise) return refreshPromise
 
-  refreshing = true
-  try {
-    const stdout = await runCcusage("daily")
-    const data = JSON.parse(stdout)
-    await writeDailyCache(data)
-  } catch (err) {
-    console.error(`[cache] refresh failed:`, (err as Error).message)
-  } finally {
-    refreshing = false
-  }
-}
+  if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
 
-// Backward-compatible: for submit-worker that needs monthly data
-export async function fetchMonthlyRaw(): Promise<string> {
-  return runCcusage("monthly")
+  refreshPromise = runCcusage("daily", { offline: true })
+    .then((stdout) => {
+      const data = JSON.parse(stdout)
+      const entry = { data, updatedAt: new Date().toISOString() }
+      writeFileSync(DAILY_CACHE_FILE, JSON.stringify(entry), "utf-8")
+      console.log("[cache] refreshed, days:", (data as { daily?: unknown[] }).daily?.length)
+    })
+    .catch((err) => {
+      console.error("[cache] refresh failed:", err.message)
+    })
+    .finally(() => {
+      refreshPromise = null
+    })
+
+  return refreshPromise
 }
 
 interface DailyEntry {

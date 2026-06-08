@@ -26,17 +26,17 @@ app.use(cors({
 }))
 app.use(express.json({ limit: "10mb" }))
 
+// Health check (registered before routes to avoid auth middleware)
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() })
+})
+
 // Routes
 app.use(createAuthRoutes())
 app.use(createLeaderboardRoutes())
 app.use(createProfileRoutes())
 app.use(createSubmitRoutes())
 app.use(createAdminRoutes())
-
-// Health check
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() })
-})
 
 app.listen(PORT, () => {
   console.log(`Remote server running at http://localhost:${PORT}`)

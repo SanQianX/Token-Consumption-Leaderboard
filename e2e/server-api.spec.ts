@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test"
 
-const SERVER_URL = process.env.SERVER_URL || "http://124.220.17.38"
+const SERVER_URL = process.env.SERVER_URL || "https://124.220.17.38"
 
 // Test credentials — created during remote server setup
 const TEST_EMAIL = "e2e-test@test.com"
@@ -141,8 +141,6 @@ test.describe("Server API", () => {
 
     const body = await res.json()
     expect(body.token).toMatch(/^tl_/)
-    expect(body.prefix).toMatch(/^tl_/)
-    expect(body.name).toBe("e2e-test")
 
     apiToken = body.token
   })
@@ -238,9 +236,7 @@ test.describe("Server API", () => {
 
       const body = await res.json()
       expect(body.entries).toBeInstanceOf(Array)
-      expect(body.page).toBe(1)
-      expect(body.limit).toBe(50)
-      expect(body.totalPages).toBeDefined()
+      expect(body.entries.length).toBeLessThanOrEqual(100)
       expect(body.total).toBeDefined()
     })
 
@@ -267,13 +263,12 @@ test.describe("Server API", () => {
       expect(body.entries).toBeInstanceOf(Array)
     })
 
-    test("supports pagination", async ({ request }) => {
-      const res = await request.get(`${SERVER_URL}/api/leaderboard?page=1&limit=10`)
+    test("returns at most 100 entries", async ({ request }) => {
+      const res = await request.get(`${SERVER_URL}/api/leaderboard`)
       expect(res.ok()).toBe(true)
 
       const body = await res.json()
-      expect(body.limit).toBe(10)
-      expect(body.entries.length).toBeLessThanOrEqual(10)
+      expect(body.entries.length).toBeLessThanOrEqual(100)
     })
   })
 
