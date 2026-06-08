@@ -46,7 +46,11 @@ function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
 }
 
 export function DataTable({ mode, data, loading }: DataTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>(() =>
+    mode === "daily" || mode === "custom" || mode === "alltime"
+      ? [{ id: "date", desc: true }]
+      : []
+  )
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const isDailyLike = mode === "daily" || mode === "custom" || mode === "alltime"
