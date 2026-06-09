@@ -34,7 +34,7 @@ export function TrendChart({ data, loading }: TrendChartProps) {
           <Skeleton className="h-6 w-32" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[240px] w-full" />
         </CardContent>
       </Card>
     )
@@ -62,7 +62,7 @@ export function TrendChart({ data, loading }: TrendChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
@@ -86,17 +86,17 @@ export function TrendChart({ data, loading }: TrendChartProps) {
                   : (value: number) => [formatCost(value), "Cost"]
               }
               contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
+                backgroundColor: "var(--popover)",
+                border: "1px solid var(--border)",
                 borderRadius: "8px",
               }}
             />
             <Area
               type="monotone"
               dataKey={metric === "tokens" ? "totalTokens" : "totalCost"}
-              stroke="hsl(var(--chart-1))"
-              fill="hsl(var(--chart-1))"
-              fillOpacity={0.2}
+              stroke="var(--chart-1)"
+              fill="var(--chart-1)"
+              fillOpacity={0.14}
               strokeWidth={2}
             />
           </AreaChart>

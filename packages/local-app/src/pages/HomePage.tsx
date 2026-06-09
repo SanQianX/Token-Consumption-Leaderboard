@@ -90,7 +90,7 @@ export function HomePage() {
       if (result.data) {
         setData(result.data)
       }
-      setUpdatedAt(result.updatedAt)
+      setUpdatedAt(new Date().toISOString())
       setRefreshing(false)
     } catch (err) {
       setError((err as Error).message)

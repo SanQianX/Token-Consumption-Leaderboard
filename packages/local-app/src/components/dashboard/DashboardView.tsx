@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header"
 import { KpiCards } from "@/components/dashboard/KpiCards"
 import { TrendChart } from "@/components/dashboard/TrendChart"
 import { DataTable } from "@/components/dashboard/DataTable"
+import { UsageCoachCard } from "@/components/dashboard/UsageCoachCard"
 import type {
   ViewMode,
   DailyResponse,
@@ -86,8 +87,8 @@ export function DashboardView({
   onStartDateChange,
   onEndDateChange,
 }: DashboardViewProps) {
-  const { chartData, kpiTotals, tableData } = useMemo(() => {
-    if (!data) return { chartData: [], kpiTotals: null, tableData: [] }
+  const { chartData, kpiTotals, tableData, coachEntries } = useMemo(() => {
+    if (!data) return { chartData: [], kpiTotals: null, tableData: [], coachEntries: [] }
 
     if (mode === "daily") {
       const entries = "daily" in data ? data.daily : []
@@ -97,6 +98,7 @@ export function DashboardView({
         chartData: entries.map((d) => ({ label: formatDate(d.date), totalTokens: d.totalTokens, totalCost: d.totalCost })),
         kpiTotals: computeTotals(todayEntries),
         tableData: entries.map((d) => ({ ...d, _type: "daily" as const })),
+        coachEntries: entries,
       }
     }
 
@@ -109,6 +111,7 @@ export function DashboardView({
         chartData: entries.map((m) => ({ label: m.month, totalTokens: m.totalTokens, totalCost: m.totalCost })),
         kpiTotals: computeTotals(monthEntries),
         tableData: entries.map((m) => ({ ...m, _type: "monthly" as const })),
+        coachEntries: [],
       }
     }
 
@@ -118,6 +121,7 @@ export function DashboardView({
         chartData: entries.map((d) => ({ label: formatDate(d.date), totalTokens: d.totalTokens, totalCost: d.totalCost })),
         kpiTotals: "totals" in data ? data.totals : null,
         tableData: entries.map((d) => ({ ...d, _type: "daily" as const })),
+        coachEntries: entries,
       }
     }
 
@@ -128,10 +132,11 @@ export function DashboardView({
         chartData: entries.map((d) => ({ label: formatDate(d.date), totalTokens: d.totalTokens, totalCost: d.totalCost })),
         kpiTotals: computeTotals(filtered),
         tableData: filtered.map((d) => ({ ...d, _type: "daily" as const })),
+        coachEntries: entries,
       }
     }
 
-    return { chartData: [], kpiTotals: null, tableData: [] }
+    return { chartData: [], kpiTotals: null, tableData: [], coachEntries: [] }
   }, [mode, data, startDate, endDate])
 
   return (
@@ -147,13 +152,19 @@ export function DashboardView({
         onStartDateChange={onStartDateChange}
         onEndDateChange={onEndDateChange}
       />
-      <main className="mx-auto max-w-7xl space-y-6 p-6">
+      <main className="mx-auto max-w-7xl space-y-4 p-4 sm:p-6">
         {error && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
             Error: {error}
           </div>
         )}
-        <KpiCards totals={kpiTotals} loading={loading && !data} />
+        {mode !== "monthly" ? (
+          <section>
+            <UsageCoachCard entries={coachEntries} loading={loading && !data} />
+          </section>
+        ) : (
+          <KpiCards totals={kpiTotals} loading={loading && !data} />
+        )}
         <TrendChart data={chartData} loading={loading && !data} />
         <DataTable
           mode={mode}

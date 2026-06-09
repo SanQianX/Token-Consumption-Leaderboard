@@ -68,10 +68,20 @@ test.describe("Local Dashboard", () => {
       await expect(page.locator('button:has-text("All Time")')).toBeVisible()
     })
 
-    test("shows KPI cards or loading state", async ({ page }) => {
-      const kpiGrid = page.locator(".grid.grid-cols-1")
-      await expect(kpiGrid.first()).toBeVisible({ timeout: 10_000 })
+    test("shows AI leverage rings or loading state", async ({ page }) => {
+      await expect(page.locator('text=AI Leverage').first()).toBeVisible({ timeout: 10_000 })
+      await expect(page.locator('text=History').first()).toBeVisible({ timeout: 10_000 })
+      await expect(page.locator('button[aria-label*="ring"]').first()).toBeVisible({ timeout: 10_000 })
       await page.screenshot({ path: "screenshots/dashboard-data.png", fullPage: true })
+    })
+
+    test("can open threshold settings", async ({ page }) => {
+      const thresholds = page.locator("summary").filter({ hasText: "Thresholds" })
+      await expect(thresholds).toBeVisible({ timeout: 10_000 })
+      await thresholds.click()
+      await expect(page.getByLabel("Daily goal")).toBeVisible()
+      await expect(page.getByLabel("Effective")).toBeVisible()
+      await expect(page.getByLabel("Deep work")).toBeVisible()
     })
 
     test("shows data table or empty state", async ({ page }) => {
