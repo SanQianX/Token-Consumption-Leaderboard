@@ -5,12 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter token-leaderboard dev",
-    "dev:local": "pnpm --filter token-leaderboard dev",
-    "build": "pnpm --filter token-leaderboard build",
-    "test": "playwright test",
-    "test:local": "playwright test --project=local-app"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.52.0"
+    "build": "pnpm --filter token-leaderboard build"
   }
 }
