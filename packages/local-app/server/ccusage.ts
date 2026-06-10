@@ -28,12 +28,12 @@ export async function runCcusage(
   const args = buildArgs(command, options)
 
   return new Promise((resolve, reject) => {
-    execFile("bun", ["x", "ccusage@20.0.6", ...args], {
+    execFile("npx", ["ccusage@20.0.6", ...args], {
       maxBuffer: 10 * 1024 * 1024,
       timeout: 120_000,
       env: { ...process.env },
       windowsHide: true,
-      shell: false,
+      shell: true,
     }, (err, stdout, stderr) => {
       if (err) {
         reject(new Error(`ccusage failed: ${err.message}\n${stderr?.slice(0, 200)}`))

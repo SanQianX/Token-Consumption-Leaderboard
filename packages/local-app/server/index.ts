@@ -34,9 +34,8 @@ export function startServer(port = 3001) {
   })
 }
 
-// Auto-start when run directly (tsx watch / node bin)
+// Auto-start when run via tsx watch (dev mode)
 const isMainModule = process.argv[1]?.replace(/\\/g, "/").endsWith("server/index.ts")
-  || process.argv[1]?.replace(/\\/g, "/").endsWith("server/bin.ts")
 if (isMainModule) {
   startServer()
 }
