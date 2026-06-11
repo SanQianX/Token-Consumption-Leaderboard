@@ -1,4 +1,9 @@
 import { execFile } from "node:child_process"
+import { resolve, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const CCUSAGE_CLI = resolve(__dirname, "..", "node_modules", "ccusage", "dist", "cli.js")
 
 export interface CcusageOptions {
   since?: string
@@ -28,12 +33,11 @@ export async function runCcusage(
   const args = buildArgs(command, options)
 
   return new Promise((resolve, reject) => {
-    execFile("npx", ["ccusage@20.0.6", ...args], {
+    execFile(process.execPath, [CCUSAGE_CLI, ...args], {
       maxBuffer: 10 * 1024 * 1024,
       timeout: 120_000,
       env: { ...process.env },
       windowsHide: true,
-      shell: true,
     }, (err, stdout, stderr) => {
       if (err) {
         reject(new Error(`ccusage failed: ${err.message}\n${stderr?.slice(0, 200)}`))

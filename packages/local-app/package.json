@@ -21,7 +21,9 @@
     "build:server": "tsc -p tsconfig.server.build.json",
     "build:all": "vite build && tsc -p tsconfig.server.build.json",
     "prepublishOnly": "npm run build:all",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "ccusage": "20.0.6",
@@ -36,6 +38,7 @@
   "devDependencies": {
     "@base-ui/react": "^1.4.1",
     "@eslint/js": "^9.22.0",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/react-table": "^8.21.0",
     "@types/cors": "^2.8.17",
