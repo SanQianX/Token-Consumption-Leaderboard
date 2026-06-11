@@ -158,7 +158,7 @@ export function DashboardView({
             Error: {error}
           </div>
         )}
-        {mode !== "monthly" ? (
+        {mode === "daily" ? (
           <section>
             <UsageCoachCard entries={coachEntries} loading={loading && !data} />
           </section>
