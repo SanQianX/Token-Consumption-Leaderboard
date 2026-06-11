@@ -1,6 +1,6 @@
 {
   "name": "token-leaderboard",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "TokenMeter — local ccusage token consumption dashboard",
   "type": "module",
   "bin": {
