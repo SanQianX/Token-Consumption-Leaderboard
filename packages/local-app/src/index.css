@@ -2,64 +2,124 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Color variables use oklch() (modern browsers).
+ * A hex fallback is provided first so older browsers
+ * (e.g. QQ browser's "quick mode" with older Chromium)
+ * still get a sensible color instead of an unstyled flash.
+ */
 :root {
+  --background: #faf9f5;
   --background: oklch(0.982 0.006 85);
+  --foreground: #2e2c28;
   --foreground: oklch(0.18 0.006 80);
+  --card: #ffffff;
   --card: oklch(1 0 0);
+  --card-foreground: #2e2c28;
   --card-foreground: oklch(0.18 0.006 80);
+  --popover: #ffffff;
   --popover: oklch(1 0 0);
+  --popover-foreground: #2e2c28;
   --popover-foreground: oklch(0.18 0.006 80);
+  --primary: #2d5d59;
   --primary: oklch(0.34 0.055 178);
+  --primary-foreground: #fbfbfb;
   --primary-foreground: oklch(0.985 0 0);
+  --secondary: #f1efe9;
   --secondary: oklch(0.952 0.007 85);
+  --secondary-foreground: #3f3d39;
   --secondary-foreground: oklch(0.25 0.008 80);
+  --muted: #f1efe9;
   --muted: oklch(0.952 0.007 85);
+  --muted-foreground: #7a7872;
   --muted-foreground: oklch(0.48 0.008 80);
+  --accent: #e7f3f1;
   --accent: oklch(0.942 0.02 178);
+  --accent-foreground: #1f4945;
   --accent-foreground: oklch(0.24 0.04 178);
+  --destructive: #dc2626;
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #dc2626;
   --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: #dcd9d2;
   --border: oklch(0.89 0.01 85);
+  --input: #dcd9d2;
   --input: oklch(0.89 0.01 85);
+  --ring: #4a8a85;
   --ring: oklch(0.56 0.06 178);
   --radius: 0.5rem;
+  --chart-1: #2d8a82;
   --chart-1: oklch(0.5 0.08 178);
+  --chart-2: #3d68b8;
   --chart-2: oklch(0.53 0.09 244);
+  --chart-3: #2563b8;
   --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: #d97706;
   --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: #b8780c;
   --chart-5: oklch(0.769 0.188 70.08);
+  --brand-accent: #237873;
   --brand-accent: oklch(0.42 0.08 178);
+  --surface-soft: #f4f2ec;
   --surface-soft: oklch(0.965 0.012 85);
+  --ring-track: #e2dfd8;
   --ring-track: oklch(0.91 0.009 85);
+  --ring-volume: #1f847b;
   --ring-volume: oklch(0.43 0.083 178);
+  --ring-deep-work: #2d62b8;
   --ring-deep-work: oklch(0.52 0.11 245);
+  --ring-consistency: #b89526;
   --ring-consistency: oklch(0.56 0.065 82);
 }
 
 .dark {
+  --background: #252525;
   --background: oklch(0.145 0 0);
+  --foreground: #fbfbfb;
   --foreground: oklch(0.985 0 0);
+  --card: #252525;
   --card: oklch(0.145 0 0);
+  --card-foreground: #fbfbfb;
   --card-foreground: oklch(0.985 0 0);
+  --popover: #252525;
   --popover: oklch(0.145 0 0);
+  --popover-foreground: #fbfbfb;
   --popover-foreground: oklch(0.985 0 0);
+  --primary: #fbfbfb;
   --primary: oklch(0.985 0 0);
+  --primary-foreground: #343434;
   --primary-foreground: oklch(0.205 0 0);
+  --secondary: #444444;
   --secondary: oklch(0.269 0 0);
+  --secondary-foreground: #fbfbfb;
   --secondary-foreground: oklch(0.985 0 0);
+  --muted: #444444;
   --muted: oklch(0.269 0 0);
+  --muted-foreground: #b4b4b4;
   --muted-foreground: oklch(0.708 0 0);
+  --accent: #444444;
   --accent: oklch(0.269 0 0);
+  --accent-foreground: #fbfbfb;
   --accent-foreground: oklch(0.985 0 0);
+  --destructive: #8b1a1a;
   --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: #e85d5d;
   --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: #444444;
   --border: oklch(0.269 0 0);
+  --input: #444444;
   --input: oklch(0.269 0 0);
+  --ring: #707070;
   --ring: oklch(0.439 0 0);
+  --chart-1: #6366f1;
   --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: #14b8a6;
   --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: #d97706;
   --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: #c026d3;
   --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: #dc2626;
   --chart-5: oklch(0.645 0.246 16.439);
 }
 

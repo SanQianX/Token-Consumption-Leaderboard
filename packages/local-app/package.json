@@ -13,6 +13,16 @@
   "engines": {
     "node": ">=18"
   },
+  "browserslist": [
+    "Chrome >= 90",
+    "Edge >= 90",
+    "Firefox >= 90",
+    "Safari >= 15",
+    "iOS >= 15",
+    "not dead",
+    "not IE 11",
+    "not op_mini all"
+  ],
   "scripts": {
     "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
     "dev:client": "vite",

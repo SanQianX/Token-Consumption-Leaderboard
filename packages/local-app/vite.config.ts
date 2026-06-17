@@ -15,4 +15,8 @@ export default defineConfig({
       "/api": "http://localhost:3001",
     },
   },
+  build: {
+    target: "es2018",
+    cssMinify: "lightningcss",
+  },
 })
