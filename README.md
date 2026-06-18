@@ -1,19 +1,19 @@
-# TokenMeter
+# Tokmeter
 
 > A local-first token consumption dashboard for Claude Code (and friends).
 > One command, no cloud, no signup — just a clean dashboard for your usage.
 
 <p align="left">
-  <a href="https://www.npmjs.com/package/token-leaderboard"><img alt="npm version" src="https://img.shields.io/npm/v/token-leaderboard?color=yellow" /></a>
+  <a href="https://www.npmjs.com/package/tokmeter"><img alt="npm version" src="https://img.shields.io/npm/v/tokmeter?color=yellow" /></a>
   <a href="https://nodejs.org"><img alt="node" src="https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 </p>
 
-![TokenMeter dashboard – Daily view](docs/screenshots/daily.png)
+![Tokmeter dashboard – Daily view](docs/screenshots/daily.png)
 
-## What is TokenMeter?
+## What is Tokmeter?
 
-TokenMeter turns the JSONL logs that Claude Code (and other AI CLIs) write under `~/.claude/projects/` into a friendly dashboard you can open in your browser.
+Tokmeter turns the JSONL logs that Claude Code (and other AI CLIs) write under `~/.claude/projects/` into a friendly dashboard you can open in your browser.
 
 It runs a tiny background process on your machine, talks to [`ccusage`](https://github.com/ryoppippi/ccusage) to crunch the numbers, and renders four different views of your token & cost data — all without sending anything to a server.
 
@@ -36,7 +36,7 @@ It runs a tiny background process on your machine, talks to [`ccusage`](https://
 ## Install
 
 ```bash
-npm install -g token-leaderboard
+npm install -g tokmeter
 ```
 
 Requirements: **Node.js 18+**. That's it — `ccusage` ships as a dependency, no extra tooling needed.
@@ -45,7 +45,7 @@ Requirements: **Node.js 18+**. That's it — `ccusage` ships as a dependency, no
 
 ```bash
 # Start the dashboard in the background — auto-opens your browser
-token-leaderboard
+tokmeter
 
 # …that's it. Use the dashboard, close the terminal, it stays running.
 ```
@@ -54,13 +54,15 @@ token-leaderboard
 
 | Command | What it does |
 | --- | --- |
-| `token-leaderboard` | Start in background, open browser at <http://localhost:3001> |
-| `token-leaderboard stop` | Stop the background process |
-| `token-leaderboard status` | Check if it's currently running |
-| `token-leaderboard --fg` | Run in the foreground (Ctrl+C to stop) — useful for debugging |
-| `token-leaderboard --port 8080` | Use a different port |
-| `token-leaderboard --no-open` | Don't auto-open the browser |
-| `token-leaderboard -h` | Show all options |
+| `tokmeter` | Start in background, open browser at <http://localhost:7842> |
+| `tokmeter stop` | Stop the background process |
+| `tokmeter status` | Check if it's currently running |
+| `tokmeter --fg` | Run in the foreground (Ctrl+C to stop) — useful for debugging |
+| `tokmeter --port 8080` | Use a different port |
+| `tokmeter --no-open` | Don't auto-open the browser |
+| `tokmeter -h` | Show all options |
+
+> Tokmeter listens on port **7842** by default. If that port is busy, it automatically picks the next free one in the range 7842–7891 and prints the actual URL in the terminal.
 
 ### Views at a glance
 

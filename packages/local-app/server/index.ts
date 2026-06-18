@@ -27,7 +27,7 @@ export function createApp() {
   return app
 }
 
-export function startServer(port = 3001) {
+export function startServer(port = 7842) {
   const app = createApp()
   app.listen(port, () => {
     console.log(`TokenMeter running at http://localhost:${port}`)

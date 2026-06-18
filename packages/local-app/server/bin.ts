@@ -2,22 +2,35 @@
 import process from "node:process"
 import { spawn, exec } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs"
+import net from "node:net"
 import os from "node:os"
 import path from "node:path"
 
-const PID_FILE = path.join(os.tmpdir(), ".token-leaderboard.pid")
+const PID_FILE = path.join(os.tmpdir(), ".tokmeter.pid")
+const DEFAULT_PORT = 7842
+const PORT_RANGE = 50
 
 function readPid(): number | null {
   try {
     if (!existsSync(PID_FILE)) return null
-    return parseInt(readFileSync(PID_FILE, "utf8").trim(), 10)
+    return parseInt(readFileSync(PID_FILE, "utf8").trim().split("\n")[0], 10)
   } catch {
     return null
   }
 }
 
-function writePid(pid: number) {
-  writeFileSync(PID_FILE, String(pid), "utf8")
+function readPort(): number | null {
+  try {
+    if (!existsSync(PID_FILE)) return null
+    const lines = readFileSync(PID_FILE, "utf8").trim().split("\n")
+    return lines[1] ? parseInt(lines[1], 10) : null
+  } catch {
+    return null
+  }
+}
+
+function writePid(pid: number, port: number) {
+  writeFileSync(PID_FILE, `${pid}\n${port}`, "utf8")
 }
 
 function removePid() {
@@ -40,6 +53,32 @@ function openBrowser(url: string) {
   exec(cmd)
 }
 
+function isPortFree(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const tester = net.createServer()
+    let settled = false
+    const finish = (free: boolean) => {
+      if (settled) return
+      settled = true
+      tester.removeAllListeners()
+      tester.close(() => resolve(free))
+    }
+    tester.once("error", () => finish(false))
+    tester.once("listening", () => finish(true))
+    tester.listen(port)
+    // Safety timeout in case neither event fires
+    setTimeout(() => finish(false), 1000)
+  })
+}
+
+async function findFreePort(start: number): Promise<number> {
+  for (let offset = 0; offset < PORT_RANGE; offset++) {
+    const port = start + offset
+    if (await isPortFree(port)) return port
+  }
+  throw new Error(`No free port found in range ${start}-${start + PORT_RANGE - 1}`)
+}
+
 // ── Subcommands ──
 
 function cmdStop() {
@@ -56,7 +95,7 @@ function cmdStop() {
   try {
     process.kill(pid)
     removePid()
-    console.log("TokenLeaderboard stopped.")
+    console.log("tokmeter stopped.")
   } catch {
     console.error(`Failed to stop process ${pid}`)
     process.exit(1)
@@ -68,24 +107,25 @@ function cmdStatus() {
   const pid = readPid()
   if (!pid || !isProcessAlive(pid)) {
     removePid()
-    console.log("TokenLeaderboard is not running.")
+    console.log("tokmeter is not running.")
   } else {
-    console.log(`TokenLeaderboard is running (PID ${pid}) at http://localhost:3001`)
+    const port = readPort() ?? DEFAULT_PORT
+    console.log(`tokmeter is running (PID ${pid}) at http://localhost:${port}`)
   }
   process.exit(0)
 }
 
 function printHelp() {
-  console.log(`token-leaderboard — Token Consumption Leaderboard
+  console.log(`tokmeter — Token Consumption Leaderboard
 
 Usage:
-  token-leaderboard          Start in background (default)
-  token-leaderboard --fg     Start in foreground
-  token-leaderboard stop     Stop background process
-  token-leaderboard status   Check if running
+  tokmeter              Start in background (default)
+  tokmeter --fg         Start in foreground
+  tokmeter stop         Stop background process
+  tokmeter status       Check if running
 
 Options:
-  -p, --port <port>   Port to run on (default: 3001)
+  -p, --port <port>   Port to run on (default: ${DEFAULT_PORT})
   --no-open           Don't auto-open browser
   --fg                Run in foreground
   -h, --help          Show this help message
@@ -96,9 +136,10 @@ Options:
 // ── Parse args ──
 
 const args = process.argv.slice(2)
-let port = 3001
+let port = DEFAULT_PORT
 let shouldOpen = true
 let foreground = false
+let portExplicit = false
 
 // Subcommands
 if (args[0] === "stop") { cmdStop() }
@@ -106,11 +147,13 @@ if (args[0] === "status") { cmdStatus() }
 
 for (let i = 0; i < args.length; i++) {
   if ((args[i] === "--port" || args[i] === "-p") && args[i + 1]) {
-    port = parseInt(args[i + 1], 10)
-    if (isNaN(port)) {
+    const parsed = parseInt(args[i + 1], 10)
+    if (isNaN(parsed)) {
       console.error("Error: --port must be a number")
       process.exit(1)
     }
+    port = parsed
+    portExplicit = true
     i++
   } else if (args[i] === "--no-open") {
     shouldOpen = false
@@ -133,9 +176,9 @@ if (!foreground) {
   }
   removePid()
 
-  // Re-spawn self with --fg
+  // Re-spawn self with --fg so the child owns the PID file
   const child = spawn(process.execPath, [
-    ...process.argv.slice(1), "--fg", "--port", String(port),
+    ...process.argv.slice(1), "--fg", ...(portExplicit ? ["--port", String(port)] : []),
   ], {
     detached: true,
     stdio: "ignore",
@@ -144,8 +187,8 @@ if (!foreground) {
   child.unref()
 
   const url = `http://localhost:${port}`
-  console.log(`TokenLeaderboard started in background at ${url}`)
-  console.log(`Use "token-leaderboard stop" to stop.`)
+  console.log(`tokmeter started in background at ${url}`)
+  console.log(`Use "tokmeter stop" to stop.`)
 
   if (shouldOpen) {
     setTimeout(() => openBrowser(url), 1000)
@@ -157,14 +200,26 @@ if (!foreground) {
 
 import { startServer } from "./index.js"
 
-writePid(process.pid)
-process.on("exit", removePid)
-process.on("SIGINT", () => process.exit(0))
-process.on("SIGTERM", () => process.exit(0))
+async function main() {
+  const actualPort = portExplicit ? port : await findFreePort(port)
+  const url = `http://localhost:${actualPort}`
 
-startServer(port)
+  writePid(process.pid, actualPort)
+  process.on("exit", removePid)
+  process.on("SIGINT", () => process.exit(0))
+  process.on("SIGTERM", () => process.exit(0))
 
-if (shouldOpen) {
-  const url = `http://localhost:${port}`
-  setTimeout(() => openBrowser(url), 500)
+  startServer(actualPort)
+
+  if (actualPort !== port) {
+    console.log(`(Port ${port} was busy, using ${actualPort} instead)`)
+  }
+  if (shouldOpen) {
+    setTimeout(() => openBrowser(url), 500)
+  }
 }
+
+main().catch((err) => {
+  console.error(err.message)
+  process.exit(1)
+})

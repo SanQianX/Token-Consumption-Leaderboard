@@ -1,10 +1,10 @@
 {
-  "name": "token-leaderboard",
-  "version": "2.0.3",
-  "description": "TokenMeter — local ccusage token consumption dashboard",
+  "name": "tokmeter",
+  "version": "2.1.0",
+  "description": "Tokmeter — local Claude Code token consumption dashboard (powered by ccusage)",
   "type": "module",
   "bin": {
-    "token-leaderboard": "./dist-server/bin.js"
+    "tokmeter": "./dist-server/bin.js"
   },
   "files": [
     "dist",
@@ -74,11 +74,12 @@
     "vite": "^6.3.1"
   },
   "keywords": [
+    "tokmeter",
     "token",
-    "leaderboard",
     "claude",
     "ccusage",
-    "consumption"
+    "consumption",
+    "dashboard"
   ],
   "license": "MIT"
 }
