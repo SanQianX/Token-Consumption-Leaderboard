@@ -1,5 +1,5 @@
 {
-  "name": "tokmeter",
+  "name": "token-leaderboard",
   "version": "2.1.0",
   "description": "Tokmeter — local Claude Code token consumption dashboard (powered by ccusage)",
   "type": "module",
@@ -74,6 +74,7 @@
     "vite": "^6.3.1"
   },
   "keywords": [
+    "token-leaderboard",
     "tokmeter",
     "token",
     "claude",
