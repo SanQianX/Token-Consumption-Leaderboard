@@ -1,137 +1,75 @@
-# Token Leaderboard
+# TokenMeter
 
-Local token consumption dashboard for Claude Code users. Reads usage data via [ccusage](https://github.com/ryoppippi/ccusage) and visualizes it in a clean, single-page dashboard.
+> A local-first token consumption dashboard for Claude Code (and friends).
+> One command, no cloud, no signup — just a clean dashboard for your usage.
 
-**No Bun required** — only Node.js is needed. `ccusage` is included as a dependency, invoked via `npx`.
+<p align="left">
+  <a href="https://www.npmjs.com/package/token-leaderboard"><img alt="npm version" src="https://img.shields.io/npm/v/token-leaderboard?color=yellow" /></a>
+  <a href="https://nodejs.org"><img alt="node" src="https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white" /></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+</p>
 
-## Features
+![TokenMeter dashboard – Daily view](docs/screenshots/daily.png)
 
-- **Daily / Monthly / Session / All Time** views with KPI cards
-- Trend charts and model-level breakdowns
-- Cost estimation alongside token counts
-- File-based caching with background refresh for instant load
-- Runs in background by default — close the terminal and it stays alive
-- Default sort by newest date first
-- Single package — `npm install -g` and go
+## What is TokenMeter?
 
-## Quick Start
+TokenMeter turns the JSONL logs that Claude Code (and other AI CLIs) write under `~/.claude/projects/` into a friendly dashboard you can open in your browser.
 
-### Prerequisites
+It runs a tiny background process on your machine, talks to [`ccusage`](https://github.com/ryoppippi/ccusage) to crunch the numbers, and renders four different views of your token & cost data — all without sending anything to a server.
 
-- Node.js 18+
+- **Read-only** — never modifies your CLI logs
+- **Local-only** — your data never leaves your laptop
+- **Persistent** — runs in the background, close the terminal and the dashboard stays up
 
-### Install as a global CLI
+## Screenshots
+
+| Daily (AI Leverage) | Monthly |
+| :---: | :---: |
+| ![Daily view with AI Leverage ring, history and trend chart](docs/screenshots/daily.png) | ![Monthly view with KPI cards and monthly data table](docs/screenshots/monthly.png) |
+| A three-ring **AI Leverage** widget tracks your daily goal, deep-work score and consistency, with a 14-day rolling history. | KPI cards surface totals for the month; switch the trend to **Cost** to see USD over time. |
+
+| All Time | Custom Range |
+| :---: | :---: |
+| ![All Time view with cumulative totals across all dates](docs/screenshots/alltime.png) | ![Custom Range with date pickers for filtering](docs/screenshots/custom.png) |
+| Every day you've ever used Claude Code, paginated and sortable. | Pick any two dates — useful for sprint reviews or weekly check-ins. |
+
+## Install
 
 ```bash
 npm install -g token-leaderboard
 ```
 
-### Usage
+Requirements: **Node.js 18+**. That's it — `ccusage` ships as a dependency, no extra tooling needed.
+
+## Usage
 
 ```bash
-# Start in background (default) — opens browser, terminal can be closed
+# Start the dashboard in the background — auto-opens your browser
 token-leaderboard
 
-# Stop the background server
-token-leaderboard stop
-
-# Check if running
-token-leaderboard status
-
-# Run in foreground (for debugging)
-token-leaderboard --fg
-
-# Use a custom port
-token-leaderboard --port 8080
-
-# Don't auto-open browser
-token-leaderboard --no-open
+# …that's it. Use the dashboard, close the terminal, it stays running.
 ```
 
-| Command | Description |
-|---------|-------------|
-| `token-leaderboard` | Start in background, auto-open browser |
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `token-leaderboard` | Start in background, open browser at <http://localhost:3001> |
 | `token-leaderboard stop` | Stop the background process |
-| `token-leaderboard status` | Check if the server is running |
-| `token-leaderboard --fg` | Run in foreground (Ctrl+C to stop) |
-| `token-leaderboard --no-open` | Start without opening the browser |
-| `token-leaderboard -p 8080` | Use a custom port |
+| `token-leaderboard status` | Check if it's currently running |
+| `token-leaderboard --fg` | Run in the foreground (Ctrl+C to stop) — useful for debugging |
+| `token-leaderboard --port 8080` | Use a different port |
+| `token-leaderboard --no-open` | Don't auto-open the browser |
+| `token-leaderboard -h` | Show all options |
 
-The production build serves both the API and the static frontend from a single Express process on port 3001.
+### Views at a glance
 
-### Development
+- **Daily** — your **AI Leverage** ring (volume / deep-work / consistency), plus a sortable table for every day. Default sort is newest first.
+- **Monthly** — totals per month with a trend chart you can flip between tokens and cost.
+- **Custom Range** — pick any two dates, see only that window.
+- **All Time** — every entry across your entire history.
 
-```bash
-# Prerequisites: Node.js 18+, pnpm 9+
-
-# Install dependencies
-pnpm install
-
-# Start dev mode (Vite HMR on :5174 + Express API on :3001)
-pnpm dev
-
-# Production build
-pnpm --filter token-leaderboard build
-```
-
-## Configuration
-
-No configuration is required. The local API automatically:
-
-1. Invokes `npx ccusage@20.0.6 daily` to gather usage data
-2. Caches the result locally
-3. Refreshes in the background on each request
-
-To override `ccusage` options, pass query parameters (e.g. `?since=2026-01-01&until=2026-06-08`).
-
-## API Endpoints
-
-| Method | Endpoint       | Description                                       |
-| ------ | -------------- | ------------------------------------------------- |
-| GET    | `/api/daily`   | Daily aggregated token usage                       |
-| GET    | `/api/monthly` | Monthly aggregated token usage                     |
-| GET    | `/api/session` | Per-session token usage (derived from daily data)  |
-| GET    | `/api/blocks`  | 5-hour billing-block usage (derived from daily)   |
-
-## Tech Stack
-
-- **Frontend**: React 19, React Router 7, Recharts, Tailwind CSS v4, lucide-react
-- **Server**: Express 5, `npx ccusage@20.0.6`, file-based JSON cache
-- **Build**: Vite, TypeScript, pnpm workspaces
-
-## Project Structure
-
-```
-packages/local-app/
-├── src/                     # React frontend
-│   ├── components/
-│   │   ├── dashboard/       # Charts, tables, KPIs
-│   │   ├── layout/          # Navbar, Header
-│   │   └── ui/              # Shared primitives
-│   ├── pages/               # HomePage
-│   └── lib/                 # api.ts, types.ts, format.ts
-└── server/                  # Local Express server
-    ├── bin.ts               # CLI entry (background/foreground mode)
-    ├── index.ts             # App factory
-    ├── routes.ts            # /api/{daily,monthly,session,blocks}
-    ├── cache.ts             # File-based daily cache
-    └── ccusage.ts           # npx ccusage wrapper
-```
-
-## Publishing
-
-Push a `v*` tag to trigger the GitHub Actions workflow for automatic npm publishing:
-
-```bash
-git tag v2.0.1
-git push origin v2.0.1
-```
-
-## Uninstall
-
-```bash
-npm uninstall -g token-leaderboard
-```
+Click any row in the data table to expand the **per-model breakdown** (Opus vs Sonnet vs whatever else you used that day).
 
 ## License
 

@@ -40,11 +40,14 @@ npm-debug.log*
 # Non-source files
 Reference Project/
 knowledge/
-screenshots/
+/screenshots/
+**/test-results/
 screenshot-*.png
 e2e/
 playwright.config.ts
 playwright-report/
-test-results/
 blob-report/
 *.docx
+
+# Allow README screenshots in docs/
+!docs/screenshots/
