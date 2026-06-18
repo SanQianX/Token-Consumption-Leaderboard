@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 import type { DailyEntry } from "@/lib/types"
 import { formatCost, formatTokens } from "@/lib/format"
 import { TokenRings } from "@/components/dashboard/TokenRings"
@@ -127,6 +128,8 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
     historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  const isTodaySelected = selected.date === today.date
+
   if (loading) {
     return (
       <Card size="sm" className="bg-card/90">
@@ -143,15 +146,22 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
   return (
     <Card size="sm" className="bg-card/90">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
-        <div className="min-w-0">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Zap className="h-4 w-4 shrink-0 text-[var(--brand-accent)]" />
-            AI Leverage
+        <div className="flex min-w-0 items-center gap-2">
+          <Zap className="h-4 w-4 shrink-0 text-[var(--brand-accent)]" />
+          <CardTitle className="text-base font-semibold">
+            AI Leverage{!isTodaySelected && <span className="ml-2 text-sm font-normal text-muted-foreground">· {selected.label}</span>}
           </CardTitle>
         </div>
-        <span className="shrink-0 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium">
-          {today.level.label}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          {!isTodaySelected && (
+            <Button variant="outline" size="sm" onClick={showTodayHistory} className="h-7 px-2 text-xs">
+              Back to today
+            </Button>
+          )}
+          <span className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium">
+            {selected.level.label}
+          </span>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
@@ -159,16 +169,16 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
           <div className="flex w-full min-w-0 flex-col items-center">
             <div className="relative">
               <TokenRings
-                metrics={today}
+                metrics={selected}
                 size={212}
                 strokeWidth={10}
                 interactive
-                label="Open today ring history"
+                label={isTodaySelected ? "Open today ring history" : "Back to today"}
                 onClick={showTodayHistory}
               />
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-3xl font-semibold tracking-tight">{formatTokens(today.totalTokens)}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{today.deepWorkScore}% Deep Work</div>
+                <div className="text-3xl font-semibold tracking-tight">{formatTokens(selected.totalTokens)}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{selected.deepWorkScore}% Deep Work</div>
               </div>
             </div>
             <div className="mt-4 grid w-full grid-cols-3 gap-2">
@@ -178,7 +188,7 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
                     <div className={`h-full rounded-full ${item.className}`} />
                   </div>
                   <div className="text-[0.7rem] text-muted-foreground">{item.label}</div>
-                  <div className="text-sm font-semibold">{today[item.value]}%</div>
+                  <div className="text-sm font-semibold">{selected[item.value]}%</div>
                 </div>
               ))}
             </div>
@@ -186,10 +196,10 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
 
           <div className="grid min-w-0 content-start gap-3">
             <div className="rounded-lg border border-border bg-background px-4">
-              <StatRow label="Today Tokens" value={formatTokens(today.totalTokens)} detail={`${today.volumeProgress}% of goal`} />
-              <StatRow label="Deep Work" value={`${today.deepWorkScore}%`} detail={`${formatTokens(settings.deepWorkThreshold)} target`} />
-              <StatRow label="Streak" value={`${today.streak} days`} detail="Daily goal streak" />
-              <StatRow label="Consistency" value={`${today.effectiveDaysLast7}/7`} detail="Effective days" />
+              <StatRow label="Tokens" value={formatTokens(selected.totalTokens)} detail={`${selected.volumeProgress}% of goal`} />
+              <StatRow label="Deep Work" value={`${selected.deepWorkScore}%`} detail={`${formatTokens(settings.deepWorkThreshold)} target`} />
+              <StatRow label="Streak" value={`${selected.streak} days`} detail="Daily goal streak" />
+              <StatRow label="Consistency" value={`${selected.effectiveDaysLast7}/7`} detail="Effective days" />
             </div>
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -198,13 +208,13 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
                   <Lightbulb className="h-4 w-4 text-[var(--brand-accent)]" />
                   Suggested action
                 </div>
-                <p className="truncate text-sm text-muted-foreground">{getCoachSuggestion(today.level.id)}</p>
+                <p className="truncate text-sm text-muted-foreground">{getCoachSuggestion(selected.level.id)}</p>
               </div>
 
               <div className="rounded-lg border border-border bg-background p-3">
                 <div className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <CircleDot className="h-4 w-4 text-muted-foreground" />
-                  {selected.date === today.date ? "Today detail" : selected.label}
+                  {isTodaySelected ? "Today breakdown" : `${selected.label} breakdown`}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
