@@ -2,9 +2,13 @@
 import process from "node:process"
 import { spawn, exec } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs"
+import { createRequire } from "node:module"
 import net from "node:net"
 import os from "node:os"
 import path from "node:path"
+
+const require = createRequire(import.meta.url)
+const pkg = require("../package.json") as { version: string }
 
 const PID_FILE = path.join(os.tmpdir(), ".tokboard.pid")
 const DEFAULT_PORT = 7842
@@ -128,8 +132,14 @@ Options:
   -p, --port <port>   Port to run on (default: ${DEFAULT_PORT})
   --no-open           Don't auto-open browser
   --fg                Run in foreground
+  -v, --version       Print version and exit
   -h, --help          Show this help message
 `)
+  process.exit(0)
+}
+
+function printVersion() {
+  console.log(`tokboard v${pkg.version}`)
   process.exit(0)
 }
 
@@ -161,6 +171,8 @@ for (let i = 0; i < args.length; i++) {
     foreground = true
   } else if (args[i] === "--help" || args[i] === "-h") {
     printHelp()
+  } else if (args[i] === "--version" || args[i] === "-v") {
+    printVersion()
   }
 }
 
