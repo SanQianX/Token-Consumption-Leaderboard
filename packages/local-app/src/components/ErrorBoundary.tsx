@@ -66,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
               lineHeight: 1.5,
             }}
           >
-            TokenMeter 在渲染时发生了错误。可能是当前浏览器版本过旧，
+            Tokboard 在渲染时发生了错误。可能是当前浏览器版本过旧，
             或本地数据接口异常。
           </p>
           <details

@@ -4,8 +4,8 @@
   "version": "2.0.1",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter tokmeter dev",
-    "build": "pnpm --filter tokmeter build"
+    "dev": "pnpm --filter token-leaderboard dev",
+    "build": "pnpm --filter token-leaderboard build"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

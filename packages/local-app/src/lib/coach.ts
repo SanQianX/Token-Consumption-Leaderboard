@@ -33,7 +33,7 @@ export interface RingMetrics {
   level: UsageLevel
 }
 
-export const COACH_SETTINGS_STORAGE_KEY = "tokenmeter.coach-settings"
+export const COACH_SETTINGS_STORAGE_KEY = "tokboard.coach-settings"
 
 export const DEFAULT_COACH_SETTINGS: CoachSettings = {
   dailyTokenGoal: 100_000,

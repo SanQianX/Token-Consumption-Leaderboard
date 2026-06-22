@@ -30,7 +30,7 @@ export function createApp() {
 export function startServer(port = 7842) {
   const app = createApp()
   app.listen(port, () => {
-    console.log(`TokenMeter running at http://localhost:${port}`)
+    console.log(`Tokboard running at http://localhost:${port}`)
   })
 }
 

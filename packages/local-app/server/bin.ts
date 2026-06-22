@@ -6,7 +6,7 @@ import net from "node:net"
 import os from "node:os"
 import path from "node:path"
 
-const PID_FILE = path.join(os.tmpdir(), ".tokmeter.pid")
+const PID_FILE = path.join(os.tmpdir(), ".tokboard.pid")
 const DEFAULT_PORT = 7842
 const PORT_RANGE = 50
 
@@ -95,7 +95,7 @@ function cmdStop() {
   try {
     process.kill(pid)
     removePid()
-    console.log("tokmeter stopped.")
+    console.log("tokboard stopped.")
   } catch {
     console.error(`Failed to stop process ${pid}`)
     process.exit(1)
@@ -107,22 +107,22 @@ function cmdStatus() {
   const pid = readPid()
   if (!pid || !isProcessAlive(pid)) {
     removePid()
-    console.log("tokmeter is not running.")
+    console.log("tokboard is not running.")
   } else {
     const port = readPort() ?? DEFAULT_PORT
-    console.log(`tokmeter is running (PID ${pid}) at http://localhost:${port}`)
+    console.log(`tokboard is running (PID ${pid}) at http://localhost:${port}`)
   }
   process.exit(0)
 }
 
 function printHelp() {
-  console.log(`tokmeter — Token Consumption Leaderboard
+  console.log(`tokboard — Token Consumption Leaderboard
 
 Usage:
-  tokmeter              Start in background (default)
-  tokmeter --fg         Start in foreground
-  tokmeter stop         Stop background process
-  tokmeter status       Check if running
+  tokboard              Start in background (default)
+  tokboard --fg         Start in foreground
+  tokboard stop         Stop background process
+  tokboard status       Check if running
 
 Options:
   -p, --port <port>   Port to run on (default: ${DEFAULT_PORT})
@@ -187,8 +187,8 @@ if (!foreground) {
   child.unref()
 
   const url = `http://localhost:${port}`
-  console.log(`tokmeter started in background at ${url}`)
-  console.log(`Use "tokmeter stop" to stop.`)
+  console.log(`tokboard started in background at ${url}`)
+  console.log(`Use "tokboard stop" to stop.`)
 
   if (shouldOpen) {
     setTimeout(() => openBrowser(url), 1000)

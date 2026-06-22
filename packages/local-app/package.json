@@ -1,10 +1,10 @@
 {
   "name": "token-leaderboard",
-  "version": "2.1.0",
-  "description": "Tokmeter — local Claude Code token consumption dashboard (powered by ccusage)",
+  "version": "2.2.0",
+  "description": "Tokboard — local Claude Code token consumption dashboard (powered by ccusage)",
   "type": "module",
   "bin": {
-    "tokmeter": "./dist-server/bin.js"
+    "tokboard": "./dist-server/bin.js"
   },
   "files": [
     "dist",
@@ -75,7 +75,7 @@
   },
   "keywords": [
     "token-leaderboard",
-    "tokmeter",
+    "tokboard",
     "token",
     "claude",
     "ccusage",
