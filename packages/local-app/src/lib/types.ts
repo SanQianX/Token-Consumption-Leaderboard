@@ -130,3 +130,34 @@ export type ApiResponse =
   | { mode: "monthly"; data: MonthlyResponse }
   | { mode: "custom"; data: DailyResponse }
   | { mode: "alltime"; data: DailyResponse }
+
+export interface LiveDelta {
+  ts: number
+  model: string
+  sessionId: string
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens: number
+  cacheReadTokens: number
+}
+
+export interface LiveTodayTotals {
+  date: string
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens: number
+  cacheReadTokens: number
+  totalTokens: number
+}
+
+export interface LiveSnapshot {
+  today: LiveTodayTotals
+  recent: LiveDelta[]
+  startedAt: number
+  baselineAt: number
+  baselineSource: "scan" | "cache"
+}
+
+export type LiveEvent =
+  | ({ type: "snapshot" } & LiveSnapshot)
+  | ({ type: "delta" } & LiveSnapshot)

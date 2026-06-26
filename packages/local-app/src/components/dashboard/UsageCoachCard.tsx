@@ -17,7 +17,6 @@ import {
   computeRecentRingHistory,
   computeRingMetricsForDate,
   getCoachSuggestion,
-  localDateKey,
   normalizeCoachSettings,
   parseStoredCoachSettings,
   type CoachSettings,
@@ -27,6 +26,8 @@ import {
 interface UsageCoachCardProps {
   entries: DailyEntry[]
   loading: boolean
+  selectedDate: string
+  onSelectedDateChange: (date: string) => void
 }
 
 const RING_LEGEND = [
@@ -95,9 +96,8 @@ function RingHistory({
   )
 }
 
-export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
+export function UsageCoachCard({ entries, loading, selectedDate, onSelectedDateChange }: UsageCoachCardProps) {
   const [settings, setSettings] = useState<CoachSettings>(readInitialSettings)
-  const [selectedDate, setSelectedDate] = useState(localDateKey(new Date()))
   const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
   }
 
   const showTodayHistory = () => {
-    setSelectedDate(today.date)
+    onSelectedDateChange(today.date)
     historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
@@ -236,7 +236,7 @@ export function UsageCoachCard({ entries, loading }: UsageCoachCardProps) {
         </div>
 
         <div ref={historyRef}>
-          <RingHistory history={history} selectedDate={selectedDate} onSelect={setSelectedDate} />
+          <RingHistory history={history} selectedDate={selectedDate} onSelect={onSelectedDateChange} />
         </div>
 
         <details className="group rounded-lg border border-border bg-background px-3 py-2">

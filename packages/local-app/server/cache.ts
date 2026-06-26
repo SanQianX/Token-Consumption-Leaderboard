@@ -187,3 +187,14 @@ export function deriveView(command: string, options: CcusageOptions, rawData: Ra
 
 // Legacy compatibility for routes that still use old signatures
 export { DAILY_CACHE_FILE }
+
+// Periodic reconciliation: keep daily cache (and therefore /api/daily) aligned
+// with ccusage's source-of-truth, in case live deltas drift (model pricing
+// changes, missed cache sub-categories, etc.). Fire-and-forget; .unref() so it
+// never blocks process exit.
+if (typeof setInterval !== "undefined") {
+  const reconcile = setInterval(() => {
+    fetchAndCacheDaily().catch(() => {})
+  }, 5 * 60 * 1000)
+  reconcile.unref()
+}

@@ -1,6 +1,6 @@
 {
   "name": "token-leaderboard",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Tokboard — local Claude Code token consumption dashboard (powered by ccusage)",
   "type": "module",
   "bin": {
@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "ccusage": "20.0.6",
+    "chokidar": "^4.0.3",
     "cors": "^2.8.5",
     "express": "^5.0.0"
   },

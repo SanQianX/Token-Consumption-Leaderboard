@@ -1,6 +1,14 @@
-import { Router } from "express"
+import { Router, type Request, type Response } from "express"
 import { type CcusageOptions } from "./ccusage.js"
 import { readDailyCache, fetchAndCacheDaily, isRefreshingCache, deriveView } from "./cache.js"
+import { startLiveWatcher, getSnapshot, subscribe } from "./live.js"
+
+let liveStarted = false
+function ensureLiveStarted(): void {
+  if (liveStarted) return
+  liveStarted = true
+  startLiveWatcher()
+}
 
 const router = Router()
 
@@ -54,5 +62,30 @@ router.get("/api/daily", makeHandler("daily"))
 router.get("/api/monthly", makeHandler("monthly"))
 router.get("/api/session", makeHandler("daily"))
 router.get("/api/blocks", makeHandler("daily"))
+
+router.get("/api/live/stream", (req: Request, res: Response) => {
+  ensureLiveStarted()
+
+  res.setHeader("Content-Type", "text/event-stream")
+  res.setHeader("Cache-Control", "no-cache, no-transform")
+  res.setHeader("Connection", "keep-alive")
+  res.setHeader("X-Accel-Buffering", "no")
+
+  const send = (data: unknown): void => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`)
+  }
+
+  send({ type: "snapshot", ...getSnapshot() })
+
+  const unsubscribe = subscribe((snap) => send({ type: "delta", ...snap }))
+  const heartbeat = setInterval(() => {
+    res.write(`: ping\n\n`)
+  }, 15_000)
+
+  req.on("close", () => {
+    clearInterval(heartbeat)
+    unsubscribe()
+  })
+})
 
 export { router }

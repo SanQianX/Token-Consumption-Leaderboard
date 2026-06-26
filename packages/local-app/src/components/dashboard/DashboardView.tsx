@@ -1,9 +1,10 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { Header } from "@/components/layout/Header"
 import { KpiCards } from "@/components/dashboard/KpiCards"
 import { TrendChart } from "@/components/dashboard/TrendChart"
 import { DataTable } from "@/components/dashboard/DataTable"
 import { UsageCoachCard } from "@/components/dashboard/UsageCoachCard"
+import { LiveCounter } from "@/components/dashboard/LiveCounter"
 import type {
   ViewMode,
   DailyResponse,
@@ -13,6 +14,7 @@ import type {
   Totals,
 } from "@/lib/types"
 import { formatDate } from "@/lib/format"
+import { localDateKey } from "@/lib/coach"
 
 type ViewData =
   | DailyResponse
@@ -87,6 +89,7 @@ export function DashboardView({
   onStartDateChange,
   onEndDateChange,
 }: DashboardViewProps) {
+  const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
   const { chartData, kpiTotals, tableData, coachEntries } = useMemo(() => {
     if (!data) return { chartData: [], kpiTotals: null, tableData: [], coachEntries: [] }
 
@@ -139,6 +142,11 @@ export function DashboardView({
     return { chartData: [], kpiTotals: null, tableData: [], coachEntries: [] }
   }, [mode, data, startDate, endDate])
 
+  const selectedDailyEntry = useMemo(
+    () => coachEntries.find((e) => e.date === selectedDate) ?? null,
+    [coachEntries, selectedDate],
+  )
+
   return (
     <>
       <Header
@@ -158,9 +166,23 @@ export function DashboardView({
             Error: {error}
           </div>
         )}
+        {mode === "daily" && (
+          <section>
+            <LiveCounter
+              selectedDate={selectedDate}
+              dailyEntry={selectedDailyEntry}
+              todayDate={today()}
+            />
+          </section>
+        )}
         {mode === "daily" ? (
           <section>
-            <UsageCoachCard entries={coachEntries} loading={loading && !data} />
+            <UsageCoachCard
+              entries={coachEntries}
+              loading={loading && !data}
+              selectedDate={selectedDate}
+              onSelectedDateChange={setSelectedDate}
+            />
           </section>
         ) : (
           <KpiCards totals={kpiTotals} loading={loading && !data} />

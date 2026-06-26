@@ -4,6 +4,7 @@ import path from "node:path"
 import { existsSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { router } from "./routes.js"
+import { startLiveWatcher } from "./live.js"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -29,6 +30,7 @@ export function createApp() {
 
 export function startServer(port = 7842) {
   const app = createApp()
+  startLiveWatcher()
   app.listen(port, () => {
     console.log(`Tokboard running at http://localhost:${port}`)
   })
