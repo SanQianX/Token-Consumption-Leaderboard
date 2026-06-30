@@ -2,6 +2,7 @@
   "name": "token-consumption-leaderboard",
   "private": true,
   "version": "2.0.1",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter token-leaderboard dev",

@@ -6,7 +6,7 @@
 <p align="left">
   <a href="https://www.npmjs.com/package/token-leaderboard"><img alt="npm version" src="https://img.shields.io/npm/v/token-leaderboard?color=yellow" /></a>
   <a href="https://nodejs.org"><img alt="node" src="https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white" /></a>
-  <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" /></a>
 </p>
 
 ![Tokboard dashboard – Daily view](docs/screenshots/daily.png)
@@ -20,6 +20,17 @@ It runs a tiny background process on your machine, talks to [`ccusage`](https://
 - **Read-only** — never modifies your CLI logs
 - **Local-only** — your data never leaves your laptop
 - **Persistent** — runs in the background, close the terminal and the dashboard stays up
+
+## Open Source Boundary
+
+Tokboard's public repository contains the local-first CLI, local API server,
+dashboard UI, ccusage adapter, documentation, and build/release configuration.
+Commercial SaaS, billing, enterprise integrations, private knowledge bases,
+local AI-agent instructions, customer-specific work, and internal roadmap
+material are intentionally kept outside the public repository.
+
+See [docs/OPEN_SOURCE_BOUNDARY.md](docs/OPEN_SOURCE_BOUNDARY.md) for the
+working boundary between open-source and closed-source parts.
 
 ## Screenshots
 
@@ -79,4 +90,4 @@ Tokboard reads your system timezone (`Intl.DateTimeFormat().resolvedOptions().ti
 
 ## License
 
-MIT
+Apache-2.0

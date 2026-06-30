@@ -37,10 +37,15 @@ npm-debug.log*
 .codex/
 .taskmaster/
 .mcp.json
+CLAUDE.md
 
 # Non-source files
 Reference Project/
 knowledge/
+private/
+commercial/
+internal/
+*.secret
 /screenshots/
 **/test-results/
 screenshot-*.png
