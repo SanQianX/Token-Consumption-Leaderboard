@@ -5,6 +5,7 @@ import { join, sep } from "node:path"
 import { createInterface } from "node:readline"
 import { EventEmitter } from "node:events"
 import { getLocalTimezone } from "./ccusage.js"
+import { DAILY_CACHE_FILE } from "./cache.js"
 
 export interface LiveDelta {
   ts: number
@@ -69,9 +70,11 @@ interface CachedDaily {
 }
 
 async function tryLoadBaselineFromCache(today: string): Promise<TodayTotals | null> {
-  // The cache lives next to the source files via cache.ts; we re-derive path here to avoid
-  // pulling the full cache module (and to keep this file standalone).
+  // Primary path matches what cache.ts writes to (resolved relative to its __dirname,
+  // so it works in both dev mode and npm-global mode). The cwd-based candidates were
+  // a heuristic for dev that misses the npm install layout where cwd is unrelated.
   const candidates = [
+    DAILY_CACHE_FILE,
     join(process.cwd(), "packages", "local-app", ".cache", "daily.json"),
     join(process.cwd(), ".cache", "daily.json"),
     join(homedir(), ".tokboard", ".cache", "daily.json"),
@@ -211,6 +214,7 @@ interface State {
   seenIds: Map<string, Set<string>>
   seenIdsReady: Map<string, Promise<void>>
   watcher: FSWatcher | null
+  starting: boolean
   emitter: EventEmitter
   todayStr: string
 }
@@ -234,6 +238,7 @@ function createState(): State {
     seenIds: new Map(),
     seenIdsReady: new Map(),
     watcher: null,
+    starting: false,
     emitter: new EventEmitter(),
     todayStr: localDate(),
   }
@@ -411,7 +416,8 @@ function onFileEvent(file: string): void {
 }
 
 export function startLiveWatcher(): void {
-  if (state.watcher) return
+  if (state.starting || state.watcher) return
+  state.starting = true
   state.emitter.setMaxListeners(0)
 
   void (async () => {
@@ -525,5 +531,7 @@ export function startLiveWatcher(): void {
     console.log("[live] watcher started on:", projectsRoot())
   })().catch((err) => {
     console.error("[live] failed to start:", err)
+  }).finally(() => {
+    state.starting = false
   })
 }
