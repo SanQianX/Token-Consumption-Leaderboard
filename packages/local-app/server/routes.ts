@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express"
 import { type CcusageOptions } from "./ccusage.js"
 import { readDailyCache, fetchAndCacheDaily, isRefreshingCache, deriveView } from "./cache.js"
-import { startLiveWatcher, getSnapshot, subscribe } from "./live.js"
+import { startLiveWatcher, getSnapshot, subscribe, refreshLiveBaselineFromCache } from "./live.js"
 
 let liveStarted = false
 function ensureLiveStarted(): void {
@@ -34,6 +34,7 @@ function makeHandler(command: string) {
       if (!cached) {
         // No cache yet — await the first fetch before responding
         await fetchAndCacheDaily()
+        await refreshLiveBaselineFromCache()
         cached = readDailyCache()
       }
 
@@ -47,7 +48,9 @@ function makeHandler(command: string) {
         })
 
         // Trigger background refresh for next request
-        fetchAndCacheDaily()
+        void fetchAndCacheDaily()
+          .then(() => refreshLiveBaselineFromCache())
+          .catch(() => {})
       } else {
         res.json({ data: null, loading: true, stale: false })
       }

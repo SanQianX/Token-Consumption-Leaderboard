@@ -4,7 +4,6 @@ import { KpiCards } from "@/components/dashboard/KpiCards"
 import { TrendChart } from "@/components/dashboard/TrendChart"
 import { DataTable } from "@/components/dashboard/DataTable"
 import { UsageCoachCard } from "@/components/dashboard/UsageCoachCard"
-import { LiveCounter } from "@/components/dashboard/LiveCounter"
 import type {
   ViewMode,
   DailyResponse,
@@ -142,11 +141,6 @@ export function DashboardView({
     return { chartData: [], kpiTotals: null, tableData: [], coachEntries: [] }
   }, [mode, data, startDate, endDate])
 
-  const selectedDailyEntry = useMemo(
-    () => coachEntries.find((e) => e.date === selectedDate) ?? null,
-    [coachEntries, selectedDate],
-  )
-
   return (
     <>
       <Header
@@ -165,15 +159,6 @@ export function DashboardView({
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
             Error: {error}
           </div>
-        )}
-        {mode === "daily" && (
-          <section>
-            <LiveCounter
-              selectedDate={selectedDate}
-              dailyEntry={selectedDailyEntry}
-              todayDate={today()}
-            />
-          </section>
         )}
         {mode === "daily" ? (
           <section>

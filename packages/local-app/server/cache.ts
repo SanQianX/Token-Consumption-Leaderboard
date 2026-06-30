@@ -1,21 +1,24 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
-import { runCcusage, type CcusageOptions } from "./ccusage.js"
+import { getLocalTimezone, runCcusage, type CcusageOptions } from "./ccusage.js"
 
 interface CacheEntry {
   data: unknown
   updatedAt: string
+  timezone?: string
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CACHE_DIR = join(__dirname, "..", ".cache")
 const DAILY_CACHE_FILE = join(CACHE_DIR, "daily.json")
 
-export function readDailyCache(): CacheEntry | null {
+export function readDailyCache(timezone = getLocalTimezone()): CacheEntry | null {
   try {
     const raw = readFileSync(DAILY_CACHE_FILE, "utf-8")
-    return JSON.parse(raw) as CacheEntry
+    const entry = JSON.parse(raw) as CacheEntry
+    if (entry.timezone !== timezone) return null
+    return entry
   } catch {
     return null
   }
@@ -32,10 +35,12 @@ export function fetchAndCacheDaily(): Promise<void> {
 
   if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
 
-  refreshPromise = runCcusage("daily", { offline: true })
+  const timezone = getLocalTimezone()
+
+  refreshPromise = runCcusage("daily", { offline: true, timezone })
     .then((stdout) => {
       const data = JSON.parse(stdout)
-      const entry = { data, updatedAt: new Date().toISOString() }
+      const entry = { data, updatedAt: new Date().toISOString(), timezone }
       writeFileSync(DAILY_CACHE_FILE, JSON.stringify(entry), "utf-8")
       console.log("[cache] refreshed, days:", (data as { daily?: unknown[] }).daily?.length)
     })

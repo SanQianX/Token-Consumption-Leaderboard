@@ -1,22 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
   ChevronDown,
   CircleDot,
+  Database,
   Lightbulb,
   Zap,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import type { DailyEntry } from "@/lib/types"
+import type { DailyEntry, LiveSnapshot, LiveTodayTotals } from "@/lib/types"
 import { formatCost, formatTokens } from "@/lib/format"
 import { TokenRings } from "@/components/dashboard/TokenRings"
+import { useLiveTokens } from "@/hooks/useLiveTokens"
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber"
 import {
   COACH_SETTINGS_STORAGE_KEY,
   DEFAULT_COACH_SETTINGS,
   computeRecentRingHistory,
   computeRingMetricsForDate,
   getCoachSuggestion,
+  localDateKey,
   normalizeCoachSettings,
   parseStoredCoachSettings,
   type CoachSettings,
@@ -61,6 +67,184 @@ function StatRow({
   )
 }
 
+type TokenBreakdown = Pick<
+  DailyEntry,
+  "date" | "inputTokens" | "outputTokens" | "cacheCreationTokens" | "cacheReadTokens" | "totalTokens"
+>
+
+function emptyTokenBreakdown(date: string): TokenBreakdown {
+  return {
+    date,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationTokens: 0,
+    cacheReadTokens: 0,
+    totalTokens: 0,
+  }
+}
+
+function tokenBreakdownFromLive(today: LiveTodayTotals): TokenBreakdown {
+  return {
+    date: today.date,
+    inputTokens: today.inputTokens,
+    outputTokens: today.outputTokens,
+    cacheCreationTokens: today.cacheCreationTokens,
+    cacheReadTokens: today.cacheReadTokens,
+    totalTokens: today.totalTokens,
+  }
+}
+
+function aggregateTokenBreakdown(entries: DailyEntry[], date: string): TokenBreakdown | null {
+  const matches = entries.filter((entry) => entry.date === date)
+  if (matches.length === 0) return null
+
+  return {
+    date,
+    inputTokens: matches.reduce((sum, entry) => sum + entry.inputTokens, 0),
+    outputTokens: matches.reduce((sum, entry) => sum + entry.outputTokens, 0),
+    cacheCreationTokens: matches.reduce((sum, entry) => sum + entry.cacheCreationTokens, 0),
+    cacheReadTokens: matches.reduce((sum, entry) => sum + entry.cacheReadTokens, 0),
+    totalTokens: matches.reduce((sum, entry) => sum + entry.totalTokens, 0),
+  }
+}
+
+function mergeLiveTodayEntries(entries: DailyEntry[], snapshot: LiveSnapshot | null): DailyEntry[] {
+  if (!snapshot) return entries
+
+  const today = snapshot.today
+  const currentTodayEntries = entries.filter((entry) => entry.date === today.date)
+  const modelsUsed = Array.from(new Set(currentTodayEntries.flatMap((entry) => entry.modelsUsed ?? [])))
+  const modelBreakdowns = currentTodayEntries.flatMap((entry) => entry.modelBreakdowns ?? [])
+  const totalCost = currentTodayEntries.reduce((sum, entry) => sum + entry.totalCost, 0)
+
+  const liveEntry: DailyEntry = {
+    date: today.date,
+    inputTokens: today.inputTokens,
+    outputTokens: today.outputTokens,
+    cacheCreationTokens: today.cacheCreationTokens,
+    cacheReadTokens: today.cacheReadTokens,
+    totalTokens: today.totalTokens,
+    totalCost,
+    modelsUsed,
+    modelBreakdowns,
+    project: currentTodayEntries[0]?.project,
+  }
+
+  return [
+    ...entries.filter((entry) => entry.date !== today.date),
+    liveEntry,
+  ]
+}
+
+function Pulse({ active }: { active: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={
+        "relative inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full "
+        + (active ? "bg-emerald-500" : "bg-zinc-400")
+      }
+    >
+      {active && (
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+      )}
+    </span>
+  )
+}
+
+function TokenBreakdownCell({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  animate,
+}: {
+  label: string
+  value: number
+  icon: typeof ArrowDownToLine
+  tone: string
+  animate: boolean
+}) {
+  const animated = useAnimatedNumber(value, animate ? 320 : 0)
+
+  return (
+    <div className="min-w-0 rounded-md bg-muted/45 px-2.5 py-2">
+      <div className="flex min-w-0 items-center gap-1.5 text-[11px] font-medium uppercase text-muted-foreground">
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${tone}`} />
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="mt-1 truncate font-mono text-lg font-semibold tabular-nums leading-none">
+        {formatTokens(Math.round(animated))}
+      </div>
+    </div>
+  )
+}
+
+function TokenLivePanel({
+  selected,
+  breakdown,
+  isTodaySelected,
+  snapshot,
+  connected,
+  displayTotalTokens,
+}: {
+  selected: RingMetrics
+  breakdown: TokenBreakdown | null
+  isTodaySelected: boolean
+  snapshot: LiveSnapshot | null
+  connected: boolean
+  displayTotalTokens: number
+}) {
+  const hasLiveSnapshot = isTodaySelected && snapshot?.today.date === selected.date
+  const totals = hasLiveSnapshot
+    ? tokenBreakdownFromLive(snapshot.today)
+    : breakdown ?? emptyTokenBreakdown(selected.date)
+  const cacheTotal = totals.cacheCreationTokens + totals.cacheReadTokens
+  const title = hasLiveSnapshot ? "Live Tokens" : "Tokens"
+
+  return (
+    <div data-testid="live-counter" className="border-b border-border/70 py-2.5">
+      <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <Pulse active={hasLiveSnapshot && connected} />
+          <span className="truncate text-sm text-muted-foreground">{title}</span>
+        </div>
+        <div className="flex min-w-0 items-baseline gap-2">
+          <div className="truncate font-mono text-2xl font-semibold tabular-nums tracking-tight">
+            {formatTokens(Math.round(displayTotalTokens))}
+          </div>
+          <div className="shrink-0 text-xs text-muted-foreground">{selected.volumeProgress}% goal</div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <TokenBreakdownCell
+          label="Input"
+          value={totals.inputTokens}
+          icon={ArrowDownToLine}
+          tone="text-sky-500"
+          animate={hasLiveSnapshot}
+        />
+        <TokenBreakdownCell
+          label="Output"
+          value={totals.outputTokens}
+          icon={ArrowUpFromLine}
+          tone="text-violet-500"
+          animate={hasLiveSnapshot}
+        />
+        <TokenBreakdownCell
+          label="Cache"
+          value={cacheTotal}
+          icon={Database}
+          tone="text-emerald-500"
+          animate={hasLiveSnapshot}
+        />
+      </div>
+
+    </div>
+  )
+}
+
 function RingHistory({
   history,
   selectedDate,
@@ -99,24 +283,37 @@ function RingHistory({
 export function UsageCoachCard({ entries, loading, selectedDate, onSelectedDateChange }: UsageCoachCardProps) {
   const [settings, setSettings] = useState<CoachSettings>(readInitialSettings)
   const historyRef = useRef<HTMLDivElement>(null)
+  const todayDate = localDateKey(new Date())
+  const { snapshot, connected } = useLiveTokens({ enabled: selectedDate === todayDate })
+  const activeLiveSnapshot = snapshot?.today.date === todayDate ? snapshot : null
 
   useEffect(() => {
     window.localStorage.setItem(COACH_SETTINGS_STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
 
+  const metricsEntries = useMemo(
+    () => mergeLiveTodayEntries(entries, activeLiveSnapshot),
+    [entries, activeLiveSnapshot],
+  )
+
   const history = useMemo(
-    () => computeRecentRingHistory(entries, settings, 14),
-    [entries, settings],
+    () => computeRecentRingHistory(metricsEntries, settings, 14),
+    [metricsEntries, settings],
   )
 
   const today = useMemo(
-    () => computeRingMetricsForDate(entries, settings),
-    [entries, settings],
+    () => computeRingMetricsForDate(metricsEntries, settings, todayDate),
+    [metricsEntries, settings, todayDate],
   )
 
   const selected = useMemo(
-    () => computeRingMetricsForDate(entries, settings, selectedDate),
-    [entries, selectedDate, settings],
+    () => computeRingMetricsForDate(metricsEntries, settings, selectedDate),
+    [metricsEntries, selectedDate, settings],
+  )
+
+  const selectedBreakdown = useMemo(
+    () => aggregateTokenBreakdown(metricsEntries, selectedDate),
+    [metricsEntries, selectedDate],
   )
 
   const updateSetting = (key: keyof CoachSettings, value: string) => {
@@ -129,6 +326,10 @@ export function UsageCoachCard({ entries, loading, selectedDate, onSelectedDateC
   }
 
   const isTodaySelected = selected.date === today.date
+  const displayTotalTokens = useAnimatedNumber(
+    selected.totalTokens,
+    isTodaySelected && activeLiveSnapshot ? 320 : 0,
+  )
 
   if (loading) {
     return (
@@ -177,7 +378,7 @@ export function UsageCoachCard({ entries, loading, selectedDate, onSelectedDateC
                 onClick={showTodayHistory}
               />
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-3xl font-semibold tracking-tight">{formatTokens(selected.totalTokens)}</div>
+                <div className="text-3xl font-semibold tracking-tight">{formatTokens(Math.round(displayTotalTokens))}</div>
                 <div className="mt-1 text-xs text-muted-foreground">{selected.deepWorkScore}% Deep Work</div>
               </div>
             </div>
@@ -196,7 +397,14 @@ export function UsageCoachCard({ entries, loading, selectedDate, onSelectedDateC
 
           <div className="grid min-w-0 content-start gap-3">
             <div className="rounded-lg border border-border bg-background px-4">
-              <StatRow label="Tokens" value={formatTokens(selected.totalTokens)} detail={`${selected.volumeProgress}% of goal`} />
+              <TokenLivePanel
+                selected={selected}
+                breakdown={selectedBreakdown}
+                isTodaySelected={isTodaySelected}
+                snapshot={activeLiveSnapshot}
+                connected={connected}
+                displayTotalTokens={displayTotalTokens}
+              />
               <StatRow label="Deep Work" value={`${selected.deepWorkScore}%`} detail={`${formatTokens(settings.deepWorkThreshold)} target`} />
               <StatRow label="Streak" value={`${selected.streak} days`} detail="Daily goal streak" />
               <StatRow label="Consistency" value={`${selected.effectiveDaysLast7}/7`} detail="Effective days" />
@@ -219,7 +427,7 @@ export function UsageCoachCard({ entries, loading, selectedDate, onSelectedDateC
                 <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
                     <div className="text-xs text-muted-foreground">Tokens</div>
-                    <div className="font-semibold">{formatTokens(selected.totalTokens)}</div>
+                    <div className="font-semibold">{formatTokens(Math.round(isTodaySelected ? displayTotalTokens : selected.totalTokens))}</div>
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground">Cost</div>

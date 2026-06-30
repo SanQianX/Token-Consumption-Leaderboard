@@ -4,6 +4,7 @@ import { homedir } from "node:os"
 import { join, sep } from "node:path"
 import { createInterface } from "node:readline"
 import { EventEmitter } from "node:events"
+import { getLocalTimezone } from "./ccusage.js"
 
 export interface LiveDelta {
   ts: number
@@ -64,6 +65,7 @@ interface CachedDaily {
     }>
   }
   updatedAt?: string
+  timezone?: string
 }
 
 async function tryLoadBaselineFromCache(today: string): Promise<TodayTotals | null> {
@@ -79,6 +81,7 @@ async function tryLoadBaselineFromCache(today: string): Promise<TodayTotals | nu
       const fs = await import("node:fs/promises")
       const raw = await fs.readFile(file, "utf-8")
       const parsed = JSON.parse(raw) as CachedDaily
+      if (parsed.timezone !== getLocalTimezone()) continue
       const today_ = parsed.data?.daily?.find(
         (e) => (e.date ?? e.period) === today
       )
@@ -255,6 +258,18 @@ export function subscribe(fn: (snap: LiveSnapshot) => void): () => void {
 
 function emitUpdate(): void {
   state.emitter.emit("update", getSnapshot())
+}
+
+export async function refreshLiveBaselineFromCache(): Promise<boolean> {
+  rollOverDateIfNeeded()
+  const cached = await tryLoadBaselineFromCache(state.todayStr)
+  if (!cached) return false
+
+  state.today = cached
+  state.baselineSource = "cache"
+  state.baselineAt = Date.now()
+  emitUpdate()
+  return true
 }
 
 function rollOverDateIfNeeded(): boolean {

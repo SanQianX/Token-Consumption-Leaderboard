@@ -10,6 +10,11 @@ export interface CcusageOptions {
   until?: string
   offline?: boolean
   project?: string
+  timezone?: string
+}
+
+export function getLocalTimezone(): string | undefined {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
 function buildArgs(
@@ -17,9 +22,11 @@ function buildArgs(
   options: CcusageOptions = {},
 ): string[] {
   const args = [command, "--json"]
+  const timezone = options.timezone ?? getLocalTimezone()
 
   if (options.since) args.push("--since", options.since)
   if (options.until) args.push("--until", options.until)
+  if (timezone) args.push("--timezone", timezone)
   if (options.offline) args.push("--offline")
   if (options.project) args.push("--project", options.project)
 

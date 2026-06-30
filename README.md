@@ -26,7 +26,7 @@ It runs a tiny background process on your machine, talks to [`ccusage`](https://
 | Daily (AI Leverage) | Monthly |
 | :---: | :---: |
 | ![Daily view with AI Leverage ring, history and trend chart](docs/screenshots/daily.png) | ![Monthly view with KPI cards and monthly data table](docs/screenshots/monthly.png) |
-| A three-ring **AI Leverage** widget tracks your daily goal, deep-work score and consistency, with a 14-day rolling history. | KPI cards surface totals for the month; switch the trend to **Cost** to see USD over time. |
+| A three-ring **AI Leverage** widget tracks your daily goal, deep-work score and consistency. At the top of the card a **live tokens panel** pulses while you're coding today and breaks the total down into Input / Output / Cache. | KPI cards surface totals for the month; switch the trend to **Cost** to see USD over time. |
 
 | All Time | Custom Range |
 | :---: | :---: |
@@ -66,12 +66,16 @@ tokboard
 
 ### Views at a glance
 
-- **Daily** — your **AI Leverage** ring (volume / deep-work / consistency), plus a sortable table for every day. Default sort is newest first.
+- **Daily** — your **AI Leverage** ring (volume / deep-work / consistency), plus a sortable table for every day. Default sort is newest first. When "today" is selected the card shows a **live tokens panel** with a pulsing indicator and Input / Output / Cache breakdown that updates as you use Claude Code.
 - **Monthly** — totals per month with a trend chart you can flip between tokens and cost.
 - **Custom Range** — pick any two dates, see only that window.
 - **All Time** — every entry across your entire history.
 
-Click any row in the data table to expand the **per-model breakdown** (Opus vs Sonnet vs whatever else you used that day).
+Click any row in the data table to expand the **per-model breakdown** (Opus vs Sonnet or whatever else you used that day).
+
+### Timezone
+
+Tokboard reads your system timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and passes it to `ccusage` via `--timezone`, so daily buckets roll over at midnight in your local calendar — not UTC. The daily cache is tagged with the timezone it was built in; if you travel or change your system timezone, the next refresh rebuilds the cache so totals and the AI Leverage history stay aligned with your wall clock.
 
 ## License
 
