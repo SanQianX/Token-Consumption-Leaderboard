@@ -4,7 +4,6 @@
   "version": "2.0.1",
   "license": "Apache-2.0",
   "type": "module",
-  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "pnpm --filter token-leaderboard dev",
     "build": "pnpm --filter token-leaderboard build",
