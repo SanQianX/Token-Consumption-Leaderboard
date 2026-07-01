@@ -3,6 +3,16 @@
   "version": "2.4.1",
   "description": "Tokboard — local Claude Code token consumption dashboard (powered by ccusage)",
   "type": "module",
+  "author": "SanQian Xu",
+  "homepage": "https://github.com/SanQianX/Token-Consumption-Leaderboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SanQianX/Token-Consumption-Leaderboard.git",
+    "directory": "packages/local-app"
+  },
+  "bugs": {
+    "url": "https://github.com/SanQianX/Token-Consumption-Leaderboard/issues"
+  },
   "bin": {
     "tokboard": "./dist-server/bin.js"
   },
@@ -33,6 +43,7 @@
     "build": "tsc -b && vite build",
     "build:server": "tsc -p tsconfig.server.build.json",
     "build:all": "pnpm clean && vite build && tsc -p tsconfig.server.build.json",
+    "pack:dry-run": "npm pack --dry-run",
     "prepublishOnly": "npm run build:all",
     "preview": "vite preview",
     "test": "playwright test",
@@ -43,11 +54,6 @@
     "chokidar": "^4.0.3",
     "cors": "^2.8.5",
     "express": "^5.0.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   },
   "devDependencies": {
     "@base-ui/react": "^1.4.1",
@@ -81,10 +87,15 @@
     "token-leaderboard",
     "tokboard",
     "token",
+    "tokens",
     "claude",
+    "claude-code",
+    "ai-cli",
     "ccusage",
     "consumption",
-    "dashboard"
+    "dashboard",
+    "local-first",
+    "usage"
   ],
   "license": "Apache-2.0"
 }

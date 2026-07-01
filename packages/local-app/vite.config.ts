@@ -18,5 +18,13 @@ export default defineConfig({
   build: {
     target: "es2018",
     cssMinify: "lightningcss",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router"],
+          charts: ["recharts"],
+        },
+      },
+    },
   },
 })

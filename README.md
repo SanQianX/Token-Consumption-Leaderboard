@@ -1,93 +1,127 @@
 # Tokboard
 
-> A local-first token consumption dashboard for Claude Code (and friends).
-> One command, no cloud, no signup — just a clean dashboard for your usage.
+> A local-first token consumption dashboard for Claude Code and other AI CLI
+> workflows. One command, no account, no cloud dependency.
 
 <p align="left">
+  <a href="https://github.com/SanQianX/Token-Consumption-Leaderboard/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/SanQianX/Token-Consumption-Leaderboard/ci.yml?branch=main&label=CI" /></a>
   <a href="https://www.npmjs.com/package/token-leaderboard"><img alt="npm version" src="https://img.shields.io/npm/v/token-leaderboard?color=yellow" /></a>
   <a href="https://nodejs.org"><img alt="node" src="https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" /></a>
 </p>
 
-![Tokboard dashboard – Daily view](docs/screenshots/daily.png)
+![Tokboard dashboard - Daily view](docs/screenshots/daily.png)
 
-## What is Tokboard?
+## Why Tokboard?
 
-Tokboard turns the JSONL logs that Claude Code (and other AI CLIs) write under `~/.claude/projects/` into a friendly dashboard you can open in your browser.
+Tokboard turns local JSONL usage logs from Claude Code into a clean browser
+dashboard. It runs a tiny local process, uses
+[`ccusage`](https://github.com/ryoppippi/ccusage) for usage aggregation, and
+renders daily, monthly, custom-range, and all-time views.
 
-It runs a tiny background process on your machine, talks to [`ccusage`](https://github.com/ryoppippi/ccusage) to crunch the numbers, and renders four different views of your token & cost data — all without sending anything to a server.
+- **Local-first**: runs on your machine at `localhost`, with no hosted account.
+- **Read-only**: never modifies your Claude Code logs.
+- **Private by default**: usage data stays on your laptop.
+- **Fast to install**: one npm package, Node.js 18+, no extra setup.
+- **Transparent**: Apache-2.0 source, documented release process, and public CI.
 
-- **Read-only** — never modifies your CLI logs
-- **Local-only** — your data never leaves your laptop
-- **Persistent** — runs in the background, close the terminal and the dashboard stays up
+## Quick Start
 
-## Open Source Boundary
+```bash
+npm install -g token-leaderboard
+tokboard
+```
 
-Tokboard's public repository contains the local-first CLI, local API server,
-dashboard UI, ccusage adapter, documentation, and build/release configuration.
-Commercial SaaS, billing, enterprise integrations, private knowledge bases,
-local AI-agent instructions, customer-specific work, and internal roadmap
-material are intentionally kept outside the public repository.
+Tokboard starts in the background and opens <http://localhost:7842>. If that
+port is busy, it automatically uses the next available port in the configured
+range.
 
-See [docs/OPEN_SOURCE_BOUNDARY.md](docs/OPEN_SOURCE_BOUNDARY.md) for the
-working boundary between open-source and closed-source parts.
+You can also try it without a global install:
+
+```bash
+npx token-leaderboard
+```
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `tokboard` | Start in the background and open the dashboard |
+| `tokboard stop` | Stop the background process |
+| `tokboard status` | Show whether Tokboard is running |
+| `tokboard --fg` | Run in the foreground for debugging |
+| `tokboard --port 8080` | Use a specific port |
+| `tokboard --no-open` | Start without opening a browser |
+| `tokboard -h` | Show CLI help |
+| `tokboard -v` | Print the installed version |
 
 ## Screenshots
 
-| Daily (AI Leverage) | Monthly |
+| Daily | Monthly |
 | :---: | :---: |
-| ![Daily view with AI Leverage ring, history and trend chart](docs/screenshots/daily.png) | ![Monthly view with KPI cards and monthly data table](docs/screenshots/monthly.png) |
-| A three-ring **AI Leverage** widget tracks your daily goal, deep-work score and consistency. At the top of the card a **live tokens panel** pulses while you're coding today and breaks the total down into Input / Output / Cache. | KPI cards surface totals for the month; switch the trend to **Cost** to see USD over time. |
+| ![Daily view with AI Leverage ring, history, live tokens, and trend chart](docs/screenshots/daily.png) | ![Monthly view with KPI cards and monthly data table](docs/screenshots/monthly.png) |
+| AI Leverage, live tokens, history, and trend chart. | Monthly totals with token/cost trend switching. |
 
 | All Time | Custom Range |
 | :---: | :---: |
 | ![All Time view with cumulative totals across all dates](docs/screenshots/alltime.png) | ![Custom Range with date pickers for filtering](docs/screenshots/custom.png) |
-| Every day you've ever used Claude Code, paginated and sortable. | Pick any two dates — useful for sprint reviews or weekly check-ins. |
+| Every recorded usage day, paginated and sortable. | Pick a window for sprint reviews or weekly check-ins. |
 
-## Install
+## Privacy Model
+
+Tokboard reads local Claude Code project logs under `~/.claude/projects/` and
+serves a local dashboard from your machine. It does not require a Tokboard
+account, cloud backend, telemetry service, hosted database, or API key.
+
+The app is designed as a local OSS tool. Future hosted or enterprise services,
+if built, should live outside this repository unless they are explicitly opened.
+See [docs/OPEN_SOURCE_BOUNDARY.md](docs/OPEN_SOURCE_BOUNDARY.md).
+
+## Timezone Behavior
+
+Tokboard reads your system timezone with
+`Intl.DateTimeFormat().resolvedOptions().timeZone` and passes it to `ccusage`
+via `--timezone`, so daily buckets roll over at midnight in your local calendar
+instead of UTC. If your system timezone changes, the next refresh rebuilds the
+daily cache with the new timezone.
+
+## Development
+
+Requirements:
+
+- Node.js 18+
+- pnpm 9+
 
 ```bash
-npm install -g token-leaderboard
+pnpm install
+pnpm dev
 ```
 
-Requirements: **Node.js 18+**. That's it — `ccusage` ships as a dependency, no extra tooling needed.
-
-## Usage
+Useful checks before opening a pull request:
 
 ```bash
-# Start the dashboard in the background — auto-opens your browser
-tokboard
-
-# …that's it. Use the dashboard, close the terminal, it stays running.
+pnpm check
 ```
 
-### Commands
+`pnpm check` builds the app and runs an npm package dry run from
+`packages/local-app`, which catches stale build output and packaging mistakes.
 
-| Command | What it does |
-| --- | --- |
-| `tokboard` | Start in background, open browser at <http://localhost:7842> |
-| `tokboard stop` | Stop the background process |
-| `tokboard status` | Check if it's currently running |
-| `tokboard --fg` | Run in the foreground (Ctrl+C to stop) — useful for debugging |
-| `tokboard --port 8080` | Use a different port |
-| `tokboard --no-open` | Don't auto-open the browser |
-| `tokboard -h` | Show all options |
+## Release
 
-> Tokboard listens on port **7842** by default. If that port is busy, it automatically picks the next free one in the range 7842–7891 and prints the actual URL in the terminal.
+Publishing is automated through GitHub Actions. Maintainers publish by pushing a
+version tag such as `v2.4.1`; the workflow builds the package and publishes it
+to npm with `NPM_TOKEN`.
 
-### Views at a glance
+Do not run `npm publish` manually from a local machine.
 
-- **Daily** — your **AI Leverage** ring (volume / deep-work / consistency), plus a sortable table for every day. Default sort is newest first. When "today" is selected the card shows a **live tokens panel** with a pulsing indicator and Input / Output / Cache breakdown that updates as you use Claude Code.
-- **Monthly** — totals per month with a trend chart you can flip between tokens and cost.
-- **Custom Range** — pick any two dates, see only that window.
-- **All Time** — every entry across your entire history.
+## Contributing
 
-Click any row in the data table to expand the **per-model breakdown** (Opus vs Sonnet or whatever else you used that day).
+Issues and pull requests are welcome. Please read
+[CONTRIBUTING.md](CONTRIBUTING.md) before proposing larger changes, especially
+changes that touch privacy behavior, packaging, or the open-source boundary.
 
-### Timezone
-
-Tokboard reads your system timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) and passes it to `ccusage` via `--timezone`, so daily buckets roll over at midnight in your local calendar — not UTC. The daily cache is tagged with the timezone it was built in; if you travel or change your system timezone, the next refresh rebuilds the cache so totals and the AI Leverage history stay aligned with your wall clock.
+Security reports should follow [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache-2.0
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
